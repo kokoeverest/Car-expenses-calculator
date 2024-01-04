@@ -4,12 +4,12 @@ import requests
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait, Select
+from selenium.webdriver.support.select import Select
 from selenium.webdriver.support import expected_conditions as EC
 from conversions import (
     wait_for_a_second, 
     age_convertor, 
-    calculate_euro_catagory,
+    calculate_euro_category,
     hp_to_kw_converter)
 
 
@@ -28,8 +28,8 @@ car_tax_data = {
     'obl': 'София', # should be "obl": car.tax.city
     'obs': 'Столична', # should be "obs": car.tax.municipality
     'old': age_convertor("2012"), # should be "old": car.year 
-    'euro': calculate_euro_catagory("Euro 3"), # should be "euro": car.engine.emissions_category
-    'kw': hp_to_kw_converter("136") # # should be "kw": car.engine.power (if the power is not in kw - use the convertor)
+    'euro': calculate_euro_category("Euro 3"), # should be "euro": car.engine.emissions_category
+    'kw': hp_to_kw_converter(136) # # should be "kw": car.engine.power_hp (if the power is not in kw - use the convertor)
 }
 
 driver = webdriver.Chrome()
@@ -63,5 +63,5 @@ for k, v in car_tax_data.items():
             continue
 
 result = driver.find_element(By.CLASS_NAME, "amount").text
-
+driver.close()
 print(result) # def get_price_as_float

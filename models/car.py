@@ -9,7 +9,7 @@ class Car:
     year: int
     engine: Engine | None = None
     tax: Tax | None = None
-    tires: Tire | None = None
+    tires: list[Tire] = []
     price: float | None = None
     insurance: int | None = None
 

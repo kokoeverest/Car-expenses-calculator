@@ -5,7 +5,7 @@ def wait_for_a_second(sec: int):
     '''Wait a sec, don't put too much pressure on the server :-)'''
     return time.sleep(sec)
 
-def age_convertor(age: str):
+def age_convertor(age) -> str:
     if len(age) == 4:
         age = calculate_age(age)
     else:
@@ -24,7 +24,7 @@ def age_convertor(age: str):
     return str(result)
 
 
-def calculate_age(year):
+def calculate_age(year) -> int:
     current_year = datetime.now().year
 
     if not isinstance(year, int):
@@ -33,7 +33,7 @@ def calculate_age(year):
     return current_year - year
 
 
-def calculate_euro_catagory(string: str):
+def calculate_euro_category(string: str):
     if string == "EEV":
         return "7"
     if string.isalpha():
