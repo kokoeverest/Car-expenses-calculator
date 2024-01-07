@@ -1,7 +1,7 @@
 from datetime import datetime
 import time
 
-def wait_for_a_second(sec: int):
+def wait_for_a_second(sec=2):
     '''Wait a sec, don't put too much pressure on the server :-)'''
     return time.sleep(sec)
 
