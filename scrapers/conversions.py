@@ -1,9 +1,9 @@
 from datetime import datetime
 import time
 
-def wait_for_a_second(sec=2):
-    '''Wait a sec, don't put too much pressure on the server :-)'''
-    return time.sleep(sec)
+def wait_for_a_second(seconds=2):
+    '''Wait a second, don't put too much pressure on the server :-)'''
+    return time.sleep(seconds)
 
 def age_convertor(age) -> str:
     if len(age) == 4:
