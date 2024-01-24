@@ -8,7 +8,7 @@ import re
 import sys
 sys.path.append('.')
 from models.tire import Tire
-from conversions import wait_for_a_second, convert_car_string
+from scrapers.conversions import wait_for_a_second, convert_car_string
 
 
 """This scraper should accept the car object and add the tires sizes and prices to the calculations"""
@@ -171,7 +171,8 @@ def write_missing_car_data_to_file(missing: list | set, file_path: str):
 
 def get_tires_prices_from_file(search: list):
     start = datetime.now()
-    
+    search = [convert_car_string(el) for el in search]
+
     with open(os.getcwd()+"/tires_prices_final.txt", "rb") as sizes_file:
         try:
             existing_sizes: dict = pickle.load(sizes_file)
@@ -270,17 +271,17 @@ car_data = {
     'years': "2022"
 }
 
-result = get_tires_prices_from_file(list(car_data.values()))
+# result = get_tires_prices_from_file(list(car_data.values()))
 
-min_price = min(tire.min_price for tire in result) if result else None
-max_price = max(tire.max_price for tire in result) if result else None
-print(
-    f"Tires for " 
-    f"{car_data['makers'].capitalize()} "
-    f"{car_data['models'].capitalize()} "
-    f"{car_data['years']}:\n"
-    f"Lowest price:  {min_price} leva\n"
-    f"Highest price: {max_price} leva")
+# min_price = min(tire.min_price for tire in result) if result else None
+# max_price = max(tire.max_price for tire in result) if result else None
+# print(
+#     f"Tires for " 
+#     f"{car_data['makers'].capitalize()} "
+#     f"{car_data['models'].capitalize()} "
+#     f"{car_data['years']}:\n"
+#     f"Lowest price:  {min_price} leva\n"
+#     f"Highest price: {max_price} leva")
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

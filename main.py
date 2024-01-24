@@ -1,19 +1,21 @@
 from models.car import Car
 from models.tax import Tax
 from models.engine import Engine
+import scrapers.tires as tires 
 
-
-car: Car = Car.create_car(
+car: Car = Car(
     brand="Dacia",
     model="Duster",
-    year="2021",
+    year="2022",
     engine=None,
     tax= None,
     tires=None,
-    price="30000"
+    price="30000",
+    insurance=None
 )
+car.tires = tires.get_tires_prices_from_file([car.brand, car.model, car.year])
 
-engine: Engine = Engine.create_engine(
+engine: Engine = Engine(
     power_hp="115",
     fuel_type="petrol",
     capacity="1.5",
@@ -22,7 +24,7 @@ engine: Engine = Engine.create_engine(
 
 car.engine = engine
 
-tax: Tax = Tax.get_tax_price(
+tax: Tax = Tax(
     city="София",
     municipality="Столична",
     car_age=car.year,
