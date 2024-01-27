@@ -1,7 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from datetime import datetime
 import pickle
 import os
 import re
@@ -79,42 +78,44 @@ def select_car_brands_and_models():
             all_cars_dict = pickle.load(file)
         except EOFError:
             all_cars_dict = {}
-
+    cwd = os.getcwd()
     driver = start_driver()
     all_tire_sizes = set()
-    select_brands = Select(driver.find_element(By.ID, "makers"))
-    all_car_brands = [option.get_attribute("value") 
-                      for option in select_brands.options]
-    if all_car_brands[0] == "": 
-        all_car_brands.pop(0)
-    wait_for_a_second(1)
+    # select_brands = Select(driver.find_element(By.ID, "makers"))
+    # all_car_brands = [option.get_attribute("value") 
+    #                   for option in select_brands.options]
+    # if all_car_brands[0] == "": 
+    #     all_car_brands.pop(0)
+    # wait_for_a_second(1)
 
-    for brand in all_car_brands:    
+    for brand, models in all_cars_dict.items():    
         if brand is not None: 
-            brand = convert_car_string(brand)
+            # brand = convert_car_string(brand)
             Select(driver.find_element(By.ID, "makers")).select_by_value(brand)
         try:
-            try: 
-                all_cars_dict[brand]
-                continue
-            except KeyError:
-                wait_for_a_second(3)
-                select_models = Select(driver.find_element(By.ID, "models"))
-                current_models = [option.get_attribute("value") for option in select_models.options]
-                if current_models[0] == "": 
-                    current_models.pop(0)
+            # try: 
+            #     all_cars_dict[brand]
+            #     continue
+            # except KeyError:
+            wait_for_a_second(3)
+                # select_models = Select(driver.find_element(By.ID, "models"))
+                # current_models = [option.get_attribute("value") for option in select_models.options]
+                # if current_models[0] == "": 
+                #     current_models.pop(0)
 
-                for model in current_models:
-                    if model is not None: 
-                        Select(driver.find_element(By.ID, "models")).select_by_value(model)
-                    try:
-                        wait_for_a_second()
-                        select_years = Select(driver.find_element(By.ID, "years"))
-                        current_years = [option.get_attribute("value") for option in select_years.options]
-                        if current_years[0] == "": 
-                            current_years.pop(0)
+            for model, years in models.items():
+                if model is not None: 
+                    Select(driver.find_element(By.ID, "models")).select_by_value(model)
+                try:
+                    wait_for_a_second()
+                #     select_years = Select(driver.find_element(By.ID, "years"))
+                #     current_years = [option.get_attribute("value") for option in select_years.options]
+                #     if current_years[0] == "": 
+                #         current_years.pop(0)
 
-                        for year in current_years:
+                    for year in years:
+                        if all_cars_dict[brand][model][year] == []: #list(possible_sizes)
+
                             if year is not None:
                                 Select(driver.find_element(By.ID, "years")).select_by_value(year)
                             wait_for_a_second(1)
@@ -124,23 +125,28 @@ def select_car_brands_and_models():
                             if len(possible_sizes) > 0:
                                 all_tire_sizes.update(possible_sizes)
 
-                            if brand not in all_cars_dict: 
-                                all_cars_dict[brand] = {}
-                            if model not in all_cars_dict[brand]:
-                                all_cars_dict[brand][model] = {}
-                            if year not in all_cars_dict[brand][model]:
-                                all_cars_dict[brand][model][year] = list(possible_sizes)
-                            
-                            cwd = os.getcwd()
-                            with open(cwd+"/car_tires.txt", "wb") as file:
-                                pickle.dump(all_cars_dict, file)
-
-                    except Exception as e:
-                        print(e)
-                        continue
-        except Exception as e:
-            print(e)
+                            all_cars_dict[brand][model][year] = list(possible_sizes)
+                        # if brand not in all_cars_dict: 
+                        #     all_cars_dict[brand] = {}
+                        # if model not in all_cars_dict[brand]:
+                        #     all_cars_dict[brand][model] = {}
+                        # if year not in all_cars_dict[brand][model]:
+                        #     all_cars_dict[brand][model][year] = list(possible_sizes)
+            
+                
+                except Exception:
+                    with open(cwd+'/tires_missing_car_data.txt', 'a') as misiing:
+                        print(f'{brand} {model} {year}', file=misiing)
+                    continue
+                
+        except Exception:
+            with open(cwd+'/tires_missing_car_data.txt', 'a') as misiing:
+                print(f'{brand} {model} {year}', file=misiing)
             continue
+
+        finally:
+            with open(cwd+"/car_tires.txt", "wb") as file:
+                pickle.dump(all_cars_dict, file)
 
     return all_cars_dict
 
@@ -170,7 +176,6 @@ def write_missing_car_data_to_file(missing: list | set, file_path: str):
 
 
 def get_tires_prices_from_file(search: list):
-    start = datetime.now()
     search = [convert_car_string(el) for el in search]
 
     with open(os.getcwd()+"/tires_prices_final.txt", "rb") as sizes_file:
@@ -184,7 +189,8 @@ def get_tires_prices_from_file(search: list):
             data: dict[dict, dict[dict, dict[str, list]]] = pickle.load(file)
         except EOFError:
             data = {}
-
+# update the workflow -> look for the price in the file -> scrape the car data if it's missing ->
+# look for the tire price in the file -> scrape it if it's missing -> pickle the updated dicts in the files
     search_result = None
     final_result = []
     missing_tire_sizes: set[str] = set()
@@ -199,22 +205,18 @@ def get_tires_prices_from_file(search: list):
         if search_result: break
 
 
-    if not search_result:
-        missing_car_data = search
-        write_missing_car_data_to_file(missing_car_data, "/missing_car_data.txt")
-    else:
-        for tire in search_result:
-            if tire in existing_sizes:
-                final_result.append(existing_sizes.get(tire))
-            else:
-                missing_tire_sizes.add(tire)
-        if missing_tire_sizes:
-            write_missing_car_data_to_file(missing_tire_sizes, "/missing_tires_sizes.txt")
+    # if not search_result:
+    #     missing_car_data = search
+    #     write_missing_car_data_to_file(missing_car_data, "/missing_car_data.txt")
+    # else:
+    #     for tire in search_result:
+    #         if tire in existing_sizes:
+    #             final_result.append(existing_sizes.get(tire))
+    #         else:
+    #             missing_tire_sizes.add(tire)
+    #     if missing_tire_sizes:
+    #         write_missing_car_data_to_file(missing_tire_sizes, "/missing_tires_sizes.txt")
     
-
-    end = datetime.now()
-    diff = (end - start)
-    print(f"Duration: {diff}")
     return final_result
     
 
@@ -255,11 +257,6 @@ def scrape_tire_prices():
                 pickle.dump(existing_sizes, file3)
         except:
             continue
-# finish price updating
-
-
-# the url of the Car tires calculator
-url = "https://www.bggumi.com/"
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -271,6 +268,8 @@ car_data = {
     'years': "2022"
 }
 
+# the url of the Car tires calculator
+url = "https://www.bggumi.com/"
 # result = get_tires_prices_from_file(list(car_data.values()))
 
 # min_price = min(tire.min_price for tire in result) if result else None
@@ -290,10 +289,10 @@ car_data = {
  scrape for car tires data 
  (should be called manually to update all the car models with their tire sizes)
  the execution of this scraping takes very long time, so concider running it during the night
-# select_car_brands_and_models()
 
  ------------------------------------------------------------------
 '''
+select_car_brands_and_models()
 
 # __________________________________________________________________
 # after scraping for the cars data now execute this function to collect the prices of the tires
