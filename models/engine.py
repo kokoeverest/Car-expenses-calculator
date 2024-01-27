@@ -18,8 +18,8 @@ class Engine:
         power_hp: str, 
         capacity: str, 
         emissions_category: str, 
-        fuel_type: str | None = None,  
-        oil_capacity: str | None = None
+        fuel_type: str,  
+        oil_capacity: str | None
         ):
 
         self.power_hp = power_hp
