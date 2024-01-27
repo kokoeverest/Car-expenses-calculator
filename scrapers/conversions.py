@@ -1,5 +1,6 @@
 from datetime import datetime
 import time
+import re
 
 def wait_for_a_second(seconds=2):
     '''Wait a second, don't put too much pressure on the server :-)'''
@@ -45,5 +46,13 @@ def calculate_euro_category(string: str):
 def hp_to_kw_converter(hp: int):
     return str(int(hp) * 0.746)
 
+
 def convert_car_string(string: str):
     return string.replace(" ", "-").lower()
+
+
+def price_convertor(product: str):
+    try:
+        return float(product.replace(',', '.'))
+    except:
+        return float(0)
