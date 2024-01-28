@@ -6,18 +6,17 @@ import scrapers.tires as tires
 from scrapers.tax import get_tax_price
 from scrapers.fuel_consumption import get_fuel_consumption
 from scrapers.insurance import get_insurance_price
+from scrapers.vignette import get_vignette_price
 import json
 from datetime import datetime
 
 
 start = datetime.now()
 car: Car = Car(
-    brand="Audi", # user input
-    model="A4", # user input
-    year="2015", # user input
-    tax=None,
+    brand="Dacia", # user input
+    model="Duster", # user input
+    year="2022", # user input
     price="30000", # user input /optional/
-    insurance=None
 )
 
 car.tires = tires.get_tires_prices_from_file([car.brand, car.model, car.year])
@@ -46,7 +45,7 @@ car.fuel_consumption = get_fuel_consumption([
     str(int(car.engine.power_hp) - 10), 
     str(int(car.engine.power_hp) + 10)
 ])
-
+car.vignette = get_vignette_price()
 tax_price = float(get_tax_price([
     car.tax.city, 
     car.tax.municipality, 
@@ -72,15 +71,17 @@ insurance_dict = {
     }
 insurance_min, insurance_max = get_insurance_price(insurance_dict)
 
-total_min_price = tax_price + fuel_per_5000_km + tires_min_price + insurance_min
-total_max_price = tax_price + fuel_per_15000_km + tires_max_price + insurance_max
+total_min_price = tax_price + fuel_per_5000_km + tires_min_price + insurance_min\
+                + car.vignette
+total_max_price = tax_price + fuel_per_15000_km + tires_max_price + insurance_max\
+                + car.vignette
 
 
 result_min = {
     'Обща минимална цена': f'{total_min_price:.2f} лв',
     'Данък': f'{tax_price:.2f} лв',
     'Гориво за 5000 км годишен пробег': f'{fuel_per_5000_km:.2f} лв',
-    'Най-евтини гуми (4 броя)': {str(tire): f'{tire.min_price} лв' for tire in car.tires},
+    'Най-евтини гуми (1 брой)': {str(tire): f'{tire.min_price} лв' for tire in car.tires},
     'Най-ниска цена на застраховка ГО': f'{insurance_min:.2f} лв'
     }
 
@@ -88,8 +89,9 @@ result_max = {
     'Обща максимална цена': f'{total_max_price:.2f} лв',
     'Данък': f'{tax_price:.2f} лв',
     'Гориво за 15000 км годишен пробег': f'{fuel_per_15000_km:.2f} лв',
-    'Най-скъпи гуми (4 броя)': {str(tire): f'{tire.max_price} лв' for tire in car.tires},
-    'Най-висока цена на застраховка ГО': f'{insurance_max:.2f} лв'
+    'Най-скъпи гуми (1 брой)': {str(tire): f'{tire.max_price} лв' for tire in car.tires},
+    'Най-висока цена на застраховка ГО': f'{insurance_max:.2f} лв',
+    'Годишна винетка': f'{car.vignette:.2f} лв'
     }
 
 print(json.dumps(car_dict, indent=2, ensure_ascii=False, separators=('', ' - ')))

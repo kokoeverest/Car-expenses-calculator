@@ -27,42 +27,37 @@ class Car:
     #                tires = tires,
     #                price = price)
     
-    def __init__(
-        self, 
-        brand: str,
-        model: str, 
-        year: str,
-        tax: Tax | None = None,
-        price: float | str | None = None,
-        insurance: int | None = None,
-        fuel_consumption: float | None = None
-        ):
-
+    def __init__(self, brand: str, model: str, year: str, price: str | None = None):
         self.brand = brand
         self.model = model
         self.year = year
         self.engine: Engine | None = None
-        self.tax = tax 
-        self.tires: list[Tire] = []
+        self.tax: Tax | None = None 
+        self._tires: list[Tire] = []
         self.price = price
-        self.insurance = insurance
-        self.fuel_consumption = fuel_consumption
+        self.insurance = None
+        self.fuel_consumption: float | None = None
+        self.vignette: float | None = None
 
     @property
-    def _tires(self):
-        if len(self.tires) > 0:
-            return sorted(self.tires, key=lambda t: t.size)
-        
+    def tires(self):
+        if len(self._tires) > 0:
+            return sorted(self._tires, key=lambda t: (t.size, t.width, t.height))
+        return []
+
+    @tires.setter
+    def tires(self, lst):
+        self._tires = lst
 
     def __dict__(self):
         return {
             'Марка': self.brand,
             'Модел': self.model,
             'Година': self.year,
-            'Двигател': self.engine.capacity or "N/A",
-            'Мощност': self.engine.power_hp or "N/A",
-            'Гориво': self.engine.fuel_type or "N/A",
-            'Цена': self.price or 'N/A',
+            'Двигател': self.engine.capacity or None,
+            'Мощност': self.engine.power_hp or None,
+            'Гориво': self.engine.fuel_type or None,
+            'Цена': self.price or None,
         }
 
     def get_fuel_prices(self, f_type, url='https://m.fuelo.net/m/prices'):
@@ -107,7 +102,6 @@ class Car:
             
         return prices[f_type]
     
-
     def calculate_tires_price(self):
         max_price = max(tire.max_price for tire in self.tires if tire.max_price)
         min_price = min(tire.min_price for tire in self.tires if tire.min_price)

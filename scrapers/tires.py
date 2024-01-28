@@ -205,17 +205,17 @@ def get_tires_prices_from_file(search: list):
         if search_result: break
 
 
-    # if not search_result:
-    #     missing_car_data = search
-    #     write_missing_car_data_to_file(missing_car_data, "/missing_car_data.txt")
-    # else:
-    #     for tire in search_result:
-    #         if tire in existing_sizes:
-    #             final_result.append(existing_sizes.get(tire))
-    #         else:
-    #             missing_tire_sizes.add(tire)
-    #     if missing_tire_sizes:
-    #         write_missing_car_data_to_file(missing_tire_sizes, "/missing_tires_sizes.txt")
+    if not search_result or search_result == []:
+        missing_car_data = search
+        write_missing_car_data_to_file(missing_car_data, "/missing_car_data.txt")
+    else:
+        for tire in search_result:
+            if tire in existing_sizes:
+                final_result.append(existing_sizes.get(tire))
+            else:
+                missing_tire_sizes.add(tire)
+        if missing_tire_sizes:
+            write_missing_car_data_to_file(missing_tire_sizes, "/missing_tires_sizes.txt")
     
     return final_result
     
@@ -290,9 +290,9 @@ url = "https://www.bggumi.com/"
  (should be called manually to update all the car models with their tire sizes)
  the execution of this scraping takes very long time, so concider running it during the night
 
+select_car_brands_and_models()
  ------------------------------------------------------------------
 '''
-select_car_brands_and_models()
 
 # __________________________________________________________________
 # after scraping for the cars data now execute this function to collect the prices of the tires
