@@ -9,6 +9,8 @@ class TaxPageTest(unittest.TestCase):
         changes in the website's structure and the program can load tax price successfully.'''
 
     def setUp(self):
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless=new')
         self.driver = webdriver.Chrome()
         self.driver.get("https://cartax.uslugi.io/")
 
@@ -49,7 +51,7 @@ class TaxPageTest(unittest.TestCase):
         self.assertIsInstance(price, str)
 
     def tearDown(self):
-        self.driver.close()
+        self.driver.quit()
 
 if __name__ == "__main__":
     unittest.main()

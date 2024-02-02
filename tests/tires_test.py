@@ -11,7 +11,10 @@ class TiresPageTest(unittest.TestCase):
         changes in the website's structure and the program can load tires prices successfully.'''
 
     def setUp(self):
-        self.driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        options.add_argument('--headless=new')
+        self.driver = webdriver.Chrome(options)
+        
         self.driver.get("https://www.bggumi.com/")
 
     def test_tiresPageLoadsSuccessfully(self):
@@ -51,7 +54,7 @@ class TiresPageTest(unittest.TestCase):
         self.assertIsNotNone(table)
 
     def tearDown(self):
-        self.driver.close()
+        self.driver.quit()
 
 if __name__ == "__main__":
     unittest.main()
