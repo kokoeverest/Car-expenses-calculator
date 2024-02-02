@@ -54,10 +54,11 @@ class Car:
             'Марка': self.brand,
             'Модел': self.model,
             'Година': self.year,
-            'Двигател': self.engine.capacity or None,
-            'Мощност': self.engine.power_hp or None,
-            'Гориво': self.engine.fuel_type or None,
-            'Цена': self.price or None,
+            'Двигател': f'{self.engine.capacity} куб.см.' if self.engine else None,
+            'Мощност': f'{self.engine.power_hp} кс.' if self.engine else None,
+            'Гориво': self.engine.fuel_type if self.engine else None,
+            'Среден разход': f'{self.fuel_consumption} л/100 км',
+            'Цена': f'{self.price}' if self.price else None,
         }
 
     def get_fuel_prices(self, f_type, url='https://m.fuelo.net/m/prices'):
@@ -76,7 +77,7 @@ class Car:
                 prices = pickle.load(file)
                 return prices[f_type]
             except KeyError:
-                prices = pickle.load(file)
+                prices = prices # type: ignore
             except EOFError:
                 prices = {}
 
@@ -103,7 +104,7 @@ class Car:
         return prices[f_type]
     
     def calculate_tires_price(self):
-        max_price = max(tire.max_price for tire in self.tires if tire.max_price)
-        min_price = min(tire.min_price for tire in self.tires if tire.min_price)
+        max_price = max((tire.max_price for tire in self.tires if tire.max_price), default=0)
+        min_price = min((tire.min_price for tire in self.tires if tire.min_price), default=0)
 
         return max_price * 4, min_price * 4

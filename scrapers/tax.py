@@ -41,7 +41,7 @@ def generate_car_data_dict(
 
 def get_tax_price(car_data: list):
     car_data_dict = generate_car_data_dict(*car_data)
-    json_data = json.dumps(car_data_dict)
+    json_data = json.dumps(car_data_dict, indent=2, ensure_ascii=False, separators=('', ' - '))
     with open(os.getcwd()+"/taxes.txt", "rb") as file:
         try:
             tax_price = pickle.load(file)
@@ -49,7 +49,7 @@ def get_tax_price(car_data: list):
         except EOFError:
             tax_price = {}
         except KeyError:
-            tax_price = pickle.load(file)
+            tax_price = tax_price # type: ignore
 
     driver = start_driver()
     all_options = {}

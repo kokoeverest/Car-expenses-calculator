@@ -5,7 +5,11 @@ import json
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from scrapers.conversions import wait_for_a_second, price_convertor
+from scrapers.conversions import (
+    wait_for_a_second, 
+    price_convertor, 
+    engine_size_convertor,
+    insurance_power_convertor)
 import sys
 sys.path.append('.')
 
@@ -22,7 +26,7 @@ def try_click(driver, button: str):
 
 
 def get_insurance_price(car_data: dict):
-    json_data = json.dumps(car_data)
+    json_data = json.dumps(car_data, indent=2, ensure_ascii=False, separators=('', ' - '))
     # try to find the prices locally
     with open(os.getcwd()+"/insurance.txt", "rb") as file:
         try:
@@ -31,7 +35,7 @@ def get_insurance_price(car_data: dict):
         except EOFError:
             prices = {}
         except KeyError:
-            prices = pickle.load(file)
+            prices = prices # type: ignore
     # scrape the prices from the website
     driver = start_driver()
     wait_for_a_second(1)
@@ -39,40 +43,46 @@ def get_insurance_price(car_data: dict):
         driver.find_element(By.ID, "thinkconsent-button-accept-all").click()
     except:
         pass
-    
-    # first page selectors
-    Select(driver.find_element(By.ID, 'typeSelect')).select_by_value('1')
-    Select(driver.find_element(By.ID, 'dvigatelSelect')).select_by_value(f'{car_data["engine_size"]}')
-    Select(driver.find_element(By.ID, 'dvigatelType')).select_by_value(f'{car_data["fuel_type"]}')
-    Select(driver.find_element(By.ID, 'ksiliSelect')).select_by_value(f'{car_data["power"]}')
-    Select(driver.find_element(By.ID, 'seatNumberSelect')).select_by_value('5')
-    Select(driver.find_element(By.ID, 'firstRegistrationYear')).select_by_value(f'{car_data["year"]}')
-    Select(driver.find_element(By.ID, 'usefor')).select_by_value('1')
-    if not car_data['registration']:
-        driver.find_element(By.ID, 'noRegistration').send_keys('0')
-    Select(driver.find_element(By.ID, 'reg_no')).select_by_value('CA')
+    try:
+        engine_size = engine_size_convertor(car_data["engine_size"])
+        power = insurance_power_convertor(car_data["power"])
 
-    wait_for_a_second(1)    
-    try_click(driver, 'continue')
+        # first page selectors
+        Select(driver.find_element(By.ID, 'typeSelect')).select_by_value('1')
+        Select(driver.find_element(By.ID, 'dvigatelSelect')).select_by_value(engine_size)
+        Select(driver.find_element(By.ID, 'dvigatelType')).select_by_value(f'{car_data["fuel_type"]}')
+        Select(driver.find_element(By.ID, 'ksiliSelect')).select_by_value(power)
+        Select(driver.find_element(By.ID, 'seatNumberSelect')).select_by_value('5')
+        Select(driver.find_element(By.ID, 'firstRegistrationYear')).select_by_value(f'{car_data["year"]}')
+        Select(driver.find_element(By.ID, 'usefor')).select_by_value('1')
+        if not car_data['registration']:
+            driver.find_element(By.ID, 'noRegistration').send_keys('0')
+        Select(driver.find_element(By.ID, 'reg_no')).select_by_value('CA')
 
-    wait_for_a_second(1)
-    # second page selectors
-    # optional - age of the owner and driving experience by driving license
-    if car_data['driver age']:
-        driver.find_element(By.ID, 'vehicleOwnerAge').send_keys(car_data['driver age'])
-    if car_data['driving experience']:
-        Select(driver.find_element(By.ID, 'driverExperience')).select_by_value(car_data['driving experience'])
-    else:
-        Select(driver.find_element(By.ID, 'driverExperience')).select_by_value('5')
-    Select(driver.find_element(By.ID, 'where_go')).select_by_value('druga')
-    
-    try_click(driver, 'calculate')
-    wait_for_a_second()
+        wait_for_a_second(1)    
+        try_click(driver, 'continue')
 
-    temp_prices = [
-        price_convertor(el.text.split('\n')[1])
-            for el in driver.find_elements(By.CLASS_NAME, "oi-compare-row")
-        ]
+        wait_for_a_second(1)
+        # second page selectors
+        # optional - age of the owner and driving experience by driving license
+        if car_data['driver age']:
+            driver.find_element(By.ID, 'vehicleOwnerAge').send_keys(car_data['driver age'])
+        if car_data['driving experience']:
+            Select(driver.find_element(By.ID, 'driverExperience')).select_by_value(car_data['driving experience'])
+        else:
+            Select(driver.find_element(By.ID, 'driverExperience')).select_by_value('5')
+        Select(driver.find_element(By.ID, 'where_go')).select_by_value('druga')
+        
+        try_click(driver, 'calculate')
+        wait_for_a_second()
+
+        temp_prices = [
+            price_convertor(el.text.split('\n')[1])
+                for el in driver.find_elements(By.CLASS_NAME, "oi-compare-row")
+            ]
+    except:
+        return '0'
+
     prices[json_data] = [min(temp_prices), max(temp_prices)]
     with open(os.getcwd()+"/insurance.txt", "wb") as file:
         pickle.dump(prices, file)

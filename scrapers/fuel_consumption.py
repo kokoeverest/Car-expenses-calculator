@@ -3,10 +3,10 @@ import pickle
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from scrapers.conversions import wait_for_a_second, price_convertor
+from scrapers.conversions import wait_for_a_second, price_convertor, find_correct_name
 import sys
 sys.path.append('.')
-
+from fuzzywuzzy import fuzz
 
 def find_fuel_consumption(
         cars_dict: dict,
@@ -21,10 +21,14 @@ def find_fuel_consumption(
     ):
     wait_for_a_second(1)
     driver = start_driver()
-    Select(driver.find_element(By.ID, "manuf")).select_by_visible_text(brand.capitalize())
+    brand = find_correct_name(brand, {opt.text for opt in Select(driver.find_element(By.ID, "manuf")).options})
+    if brand != "":
+        Select(driver.find_element(By.ID, "manuf")).select_by_visible_text(brand)
     wait_for_a_second(1)
     try:
-        Select(driver.find_element(By.ID, "model")).select_by_visible_text(model.capitalize())
+        model = find_correct_name(model, {opt.text for opt in Select(driver.find_element(By.ID, "model")).options})
+        if model != "":
+            Select(driver.find_element(By.ID, "model")).select_by_visible_text(model)
         Select(driver.find_element(By.ID, "fueltype")).select_by_visible_text(fuel_type.capitalize())
         driver.find_element(By.ID, "constyear_s").send_keys(year_from)
         driver.find_element(By.ID, "constyear_e").send_keys(year_to)
