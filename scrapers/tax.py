@@ -42,7 +42,9 @@ def generate_car_data_dict(
 def get_tax_price(car_data: list):
     car_data_dict = generate_car_data_dict(*car_data)
     json_data = json.dumps(car_data_dict, indent=2, ensure_ascii=False, separators=('', ' - '))
-    with open(os.getcwd()+"/taxes.txt", "rb") as file:
+    cwd = os.getcwd()
+    
+    with open(cwd+"/taxes.txt", "rb") as file:
         try:
             tax_price = pickle.load(file)
             return tax_price[json_data]
@@ -74,15 +76,7 @@ def get_tax_price(car_data: list):
 
     tax_price[json_data] = price
 
-    with open(os.getcwd()+"/taxes.txt", "wb") as file:
+    with open(cwd+"/taxes.txt", "wb") as file:
         pickle.dump(tax_price, file)
 
-    return tax_price[json_data]
-
-car_tax_data = {
-    'obl': 'София', # should be "obl": car.tax.city
-    'obs': 'Столична', # should be "obs": car.tax.municipality
-    'old': "2012", # should be "old": car.year 
-    'euro': "Euro 4", # should be "euro": car.engine.emissions_category
-    'kw': 136 # # should be "kw": car.engine.power_hp (if the power is not in kw - use the convertor)
-}
+    return price

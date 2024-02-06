@@ -62,7 +62,7 @@ class Car:
         }
 
     def get_fuel_prices(self, f_type, url='https://m.fuelo.net/m/prices'):
-    
+        cwd = os.getcwd()
         fuels_dict = {
             'Бензин A95': 'gasoline',
             'Дизел': 'diesel',
@@ -72,7 +72,7 @@ class Car:
             'Бензин A98': 'gasoline A98',
             'Бензин A100': 'gasoline A100'
         }
-        with open(os.getcwd()+"/fuel_prices.txt", "rb") as file:
+        with open(cwd+"/fuel_prices.txt", "rb") as file:
             try:
                 prices = pickle.load(file)
                 return prices[f_type]
@@ -98,7 +98,7 @@ class Car:
                 fuel_type = fuel_type.replace(f'{fuel_type}', f'{new_str}')
                 prices[fuel_type] = float(price.replace(',', '.').rstrip('лв.'))
 
-        with open(os.getcwd()+"/fuel_prices.txt", "wb") as file:
+        with open(cwd+"/fuel_prices.txt", "wb") as file:
             pickle.dump(prices, file)
             
         return prices[f_type]

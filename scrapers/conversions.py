@@ -14,9 +14,12 @@ def word_versions(word: str):
         word = "".join(word_as_list)
     return {
         copy_of_word,
+        copy_of_word.lower(), 
+        copy_of_word.upper(),
         word.lower(), 
         word.upper(), 
         word.capitalize(), 
+        word.replace(" ", ""),
         word.replace("-", ""), 
         word.replace(" ", '.'), 
         word.replace("-", " "),
@@ -122,3 +125,5 @@ def insurance_power_convertor(power: str) -> str:
     elif 160 < int(power) <= 170:   return '125'
     else:                           return '126'
 
+def done(string='Done'):
+    print('\n'+string+'\n'+'-' * 33)

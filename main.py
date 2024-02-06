@@ -2,7 +2,7 @@ from models.car import Car
 from models.tax import Tax
 from models.engine import Engine
 from models.insurance import InsuranceFuelValues as fuel
-from scrapers.conversions import get_euro_category_from_car_year
+from scrapers.conversions import get_euro_category_from_car_year, done
 from scrapers.tires import get_tires_prices
 from scrapers.tax import get_tax_price
 from scrapers.fuel_consumption import get_fuel_consumption
@@ -19,9 +19,6 @@ car: Car = Car(
     year="2016", # user input
     price="24800", # user input /optional/
 )
-
-car.tires = get_tires_prices([car.brand, car.model, car.year])
-
 car.engine = Engine(
     power_hp="150", # user input
     fuel_type="diesel", # user input
@@ -29,6 +26,15 @@ car.engine = Engine(
     oil_capacity=None,
     emissions_category=get_euro_category_from_car_year(car.year) # or user input
 )
+try: 
+    print('Collecting tires prices...')
+    car.tires = get_tires_prices([car.brand, car.model, car.year])
+    done()
+except: 
+    # return the prices of the most common tire sizes instead of *No info*
+    done('***Error while collecting tires prices***')
+    car.tires = []
+
 car.tax = Tax(
     "София", # user input
     "Столична", # to be extracted from the user input
@@ -36,26 +42,32 @@ car.tax = Tax(
     car.engine.emissions_category,
     car.engine.power_hp
 )
+print('Collecting fuel consumption...')
 car.fuel_consumption = get_fuel_consumption([
     car.brand, 
     car.model, 
     car.year, 
     car.year, 
     car.engine.fuel_type, 
-    str(int(car.engine.power_hp) - 10), 
-    str(int(car.engine.power_hp) + 10)
+    car.engine.power_hp, 
+    car.engine.power_hp
 ])
+done()
+print('Collecting vignette price...')
 car.vignette = get_vignette_price()
+done()
+print('Collecting tax price...')
 tax_price = float(get_tax_price([
-    car.tax.city, 
-    car.tax.municipality, 
-    car.tax.car_age, 
-    car.tax.euro_category,
-    car.tax.car_power_kw]))
+car.tax.city, 
+car.tax.municipality, 
+car.tax.car_age, 
+car.tax.euro_category,
+car.tax.car_power_kw]))
+done()
 
 fuel_per_liter = car.get_fuel_prices(car.engine.fuel_type)
-fuel_per_15000_km = (fuel_per_liter * car.fuel_consumption) * 150
-fuel_per_5000_km = (fuel_per_liter * car.fuel_consumption) * 50
+fuel_per_30000_km = (fuel_per_liter * car.fuel_consumption) * 300
+fuel_per_10000_km = (fuel_per_liter * car.fuel_consumption) * 100
 
 tires_max_price, tires_min_price = car.calculate_tires_price()
 
@@ -69,11 +81,13 @@ insurance_dict = {
     'driver age': None,
     'driving experience': None
     }
+print('Collecting insurance price...')
 insurance_min, insurance_max = get_insurance_price(insurance_dict)
+done()
 
-total_min_price = tax_price + fuel_per_5000_km + tires_min_price + insurance_min\
+total_min_price = tax_price + fuel_per_10000_km + tires_min_price + insurance_min\
                 + car.vignette
-total_max_price = tax_price + fuel_per_15000_km + tires_max_price + insurance_max\
+total_max_price = tax_price + fuel_per_30000_km + tires_max_price + insurance_max\
                 + car.vignette
 
 
@@ -81,16 +95,16 @@ car_dict = car.__dict__()
 result_min = {
     'Обща минимална цена': f'{total_min_price:.2f} лв',
     'Данък': f'{tax_price:.2f} лв',
-    'Гориво за 5000 км годишен пробег': f'{fuel_per_5000_km:.2f} лв',
-    'Най-ниска цена на застраховка ГО': f'{insurance_min:.2f} лв',
+    'Гориво за 10000 км годишен пробег': f'{fuel_per_10000_km:.2f} лв ({fuel_per_10000_km/12:.2f} лв/месец)',
+    'Най-ниска цена на застраховка ГО': f'{insurance_min:.2f} лв (еднократно плащане)',
     'Най-евтини гуми (1 брой)': {str(tire): f'{tire.min_price} лв' for tire in car.tires}
     }
 
 result_max = {
     'Обща максимална цена': f'{total_max_price:.2f} лв',
     'Данък': f'{tax_price:.2f} лв',
-    'Гориво за 15000 км годишен пробег': f'{fuel_per_15000_km:.2f} лв',
-    'Най-висока цена на застраховка ГО': f'{insurance_max:.2f} лв',
+    'Гориво за 30000 км годишен пробег': f'{fuel_per_30000_km:.2f} лв ({fuel_per_30000_km/12:.2f} лв/месец)',
+    'Най-висока цена на застраховка ГО': f'{insurance_max:.2f} лв (еднократно плащане)',
     'Годишна винетка': f'{car.vignette:.2f} лв',
     'Най-скъпи гуми (1 брой)': {str(tire): f'{tire.max_price} лв' for tire in car.tires}
     }

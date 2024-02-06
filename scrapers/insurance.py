@@ -28,7 +28,8 @@ def try_click(driver, button: str):
 def get_insurance_price(car_data: dict):
     json_data = json.dumps(car_data, indent=2, ensure_ascii=False, separators=('', ' - '))
     # try to find the prices locally
-    with open(os.getcwd()+"/insurance.txt", "rb") as file:
+    cwd = os.getcwd()
+    with open(cwd+"/insurance.txt", "rb") as file:
         try:
             prices = pickle.load(file)
             return prices[json_data]
@@ -84,7 +85,7 @@ def get_insurance_price(car_data: dict):
         return '0'
 
     prices[json_data] = [min(temp_prices), max(temp_prices)]
-    with open(os.getcwd()+"/insurance.txt", "wb") as file:
+    with open(cwd+"/insurance.txt", "wb") as file:
         pickle.dump(prices, file)
 
     return prices[json_data]
