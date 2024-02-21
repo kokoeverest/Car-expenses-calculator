@@ -27,7 +27,8 @@ def get_fuel_prices(url='https://m.fuelo.net/m/prices'):
             fuel_type, price = str(raw[0] + ' ' + raw[1]), raw[2]
         elif len(raw) == 2:
             fuel_type, price = raw 
-        else: continue
+        else:
+            continue
 
         if 'цени от' not in price:
             new_str = fuels_dict.get(fuel_type)

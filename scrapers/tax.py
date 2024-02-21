@@ -59,7 +59,7 @@ def get_tax_price(car_data: list):
         try:
             el = driver.find_element(By.XPATH, f"//select[@name='{k}']")
             all_options[k] = extract_option_or_input_fields(el, v)
-        except:
+        except Exception:
                 # the 'kw' input field
             try:
                 el = driver.find_element(By.XPATH, f"//input[@name='{k}']")
@@ -67,7 +67,7 @@ def get_tax_price(car_data: list):
                 el.clear()
                 el.send_keys(v)
                 el.submit()
-            except:
+            except Exception:
                 continue
     try:
         price = driver.find_element(By.CLASS_NAME, "amount").text.split(' ')[0]

@@ -1,4 +1,3 @@
-from datetime import datetime
 import os
 import pickle
 import json
@@ -17,11 +16,11 @@ sys.path.append('.')
 def try_click(driver, button: str):
     try:
         driver.find_element(By.ID, button).click()
-    except:
+    except Exception:
         try:
             driver.find_element(By.XPATH, '//*[@id="popup-container"]/a').click()
             driver.find_element(By.ID, button).click()
-        except:
+        except Exception:
             pass
 
 
@@ -42,7 +41,7 @@ def get_insurance_price(car_data: dict):
     wait_for_a_second(1)
     try:
         driver.find_element(By.ID, "thinkconsent-button-accept-all").click()
-    except:
+    except Exception:
         pass
     try:
         engine_size = engine_size_convertor(car_data["engine_size"])
@@ -81,7 +80,7 @@ def get_insurance_price(car_data: dict):
             price_convertor(el.text.split('\n')[1])
                 for el in driver.find_elements(By.CLASS_NAME, "oi-compare-row")
             ]
-    except:
+    except Exception:
         return '0'
 
     prices[json_data] = [min(temp_prices), max(temp_prices)]

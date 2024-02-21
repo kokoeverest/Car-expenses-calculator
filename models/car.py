@@ -55,7 +55,7 @@ class Car:
             'Модел': self.model,
             'Година': self.year,
             'Двигател': f'{self.engine.capacity} куб.см.' if self.engine else None,
-            'Мощност': f'{self.engine.power_hp} кс.' if self.engine else None,
+            'Мощност': f'{self.engine.power_hp} к.с.' if self.engine else None,
             'Гориво': self.engine.fuel_type if self.engine else None,
             'Среден разход': f'{self.fuel_consumption} л/100 км',
             'Цена': f'{self.price}' if self.price else None,
@@ -91,7 +91,8 @@ class Car:
                 fuel_type, price = str(raw[0] + ' ' + raw[1]), raw[2]
             elif len(raw) == 2:
                 fuel_type, price = raw 
-            else: continue
+            else:
+                continue
 
             if 'цени от' not in price:
                 new_str = fuels_dict.get(fuel_type)

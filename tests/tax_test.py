@@ -28,7 +28,7 @@ class TaxPageTest(unittest.TestCase):
         '''If no car power value is provided, an alert window will pop up and Selenium will 
         raise UnexpectedAlertPresentException'''
         # Arrange & Act 
-        el = self.driver.find_element(By.XPATH, f"//input[@name='kw']")
+        el = self.driver.find_element(By.XPATH, "//input[@name='kw']")
         el.clear()
         el.submit()
         # Assert

@@ -52,20 +52,22 @@ def add_product_price(driver):
     """Get the price of the first found product"""
     wait_for_a_second(1)
     
-    try: product = driver.find_element(By.CLASS_NAME, "price").text
-    except: return
+    try: 
+        product = driver.find_element(By.CLASS_NAME, "price").text
+    except Exception: 
+        return
     
     try:
         matches = re.findall(r"^\d+,\d+|^\d+\.\d+|^\d+", product)
         if len(matches) > 0:
             product = matches[0]
             return float(product)
-    except:
+    except Exception:
         try:
             # if the price of one tire is ridiculously high, above 1000 leva, it will be separated by a comma
             product = product.replace(",", "") 
             return float(product)
-        except:
+        except Exception:
             return
 
 
@@ -145,9 +147,11 @@ def get_tires_prices(search: list):
             try:
                 res = collect_tires_prices([tire], driver)
                 existing_sizes[str(tire)] = next(iter(res), None)
-            except:
+            except Exception:
                 continue
         with open(os.getcwd()+"/tires_prices_final.txt", "wb") as file3:
             pickle.dump(existing_sizes, file3)
-    if driver: driver.close()
+    if driver:
+        driver.close()
+
     return final_result
