@@ -11,7 +11,7 @@ class TaxPageTest(unittest.TestCase):
     def setUp(self):
         options = webdriver.ChromeOptions()
         options.add_argument('--headless=new')
-        self.driver = webdriver.Chrome()
+        self.driver = webdriver.Chrome(options=options)
         self.driver.get("https://cartax.uslugi.io/")
 
     def test_taxPageLoadsSuccessfully(self):

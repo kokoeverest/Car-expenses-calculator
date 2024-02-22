@@ -13,7 +13,7 @@ class TiresPageTest(unittest.TestCase):
     def setUp(self):
         options = webdriver.ChromeOptions()
         options.add_argument('--headless=new')
-        self.driver = webdriver.Chrome(options)
+        self.driver = webdriver.Chrome(options=options)
         
         self.driver.get("https://www.bggumi.com/")
 

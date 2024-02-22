@@ -77,17 +77,17 @@ def get_fuel_consumption(car_data: list[str]):
             all_cars_dict = {}
 
     if all(car_data):
-        brand, model, year_from, year_to, fuel_type, power_from, power_to = car_data
+        brand, model, year, fuel_type, power = car_data
         
         try:
-            avg_consumption = all_cars_dict[brand][model][fuel_type][year_to][power_to]
+            avg_consumption = all_cars_dict[brand][model][fuel_type][year][power]
         except KeyError:
             avg_consumption = '0'
 
         # if such record does not exist, start the driver and scrape it from the website
         if avg_consumption == '0':
             avg_consumption = find_fuel_consumption(
-                brand, model, year_from, year_to, fuel_type, power_from, power_to
+                brand, model, year, year, fuel_type, power, power
             )
             if brand not in all_cars_dict.keys(): 
                 all_cars_dict[brand] = {}
@@ -95,12 +95,12 @@ def get_fuel_consumption(car_data: list[str]):
                 all_cars_dict[brand][model] = {}
             if fuel_type not in all_cars_dict[brand][model]:
                 all_cars_dict[brand][model][fuel_type] = {}
-            if year_to not in all_cars_dict[brand][model][fuel_type]:
-                all_cars_dict[brand][model][fuel_type][year_to] = {}
-            if power_to not in all_cars_dict[brand][model][fuel_type][year_to]:
-                all_cars_dict[brand][model][fuel_type][year_to][power_to] = {}
-            if avg_consumption not in all_cars_dict[brand][model][fuel_type][year_to][power_to]:
-                all_cars_dict[brand][model][fuel_type][year_to][power_to] = avg_consumption
+            if year not in all_cars_dict[brand][model][fuel_type]:
+                all_cars_dict[brand][model][fuel_type][year] = {}
+            if power not in all_cars_dict[brand][model][fuel_type][year]:
+                all_cars_dict[brand][model][fuel_type][year][power] = {}
+            if avg_consumption not in all_cars_dict[brand][model][fuel_type][year][power]:
+                all_cars_dict[brand][model][fuel_type][year][power] = avg_consumption
             
             with open(cwd+"/fuel_consumption.txt", "wb") as file:
                 pickle.dump(all_cars_dict, file)    

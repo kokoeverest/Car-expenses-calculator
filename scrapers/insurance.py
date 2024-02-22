@@ -2,6 +2,7 @@ import os
 import pickle
 import json
 from selenium import webdriver
+from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from scrapers.conversions import (
@@ -13,7 +14,7 @@ import sys
 sys.path.append('.')
 
 
-def try_click(driver, button: str):
+def try_click(driver: WebDriver, button: str):
     try:
         driver.find_element(By.ID, button).click()
     except Exception:
