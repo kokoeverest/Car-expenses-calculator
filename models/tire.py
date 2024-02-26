@@ -1,13 +1,21 @@
 import json
+from pydantic import BaseModel
 
-class Tire:
-    
-    def __init__(self, width, height, size, min_price=None, max_price=None) -> None:
-        self.width = width
-        self.height = height
-        self.size = size
-        self.min_price = min_price
-        self.max_price = max_price
+
+class Tire(BaseModel):
+    width: str
+    height: str
+    size: str
+    min_price: float | None = None
+    max_price: float | None = None
+
+
+    # def __init__(self, width, height, size, min_price=None, max_price=None) -> None:
+    #     self.width = width
+    #     self.height = height
+    #     self.size = size
+    #     self.min_price = min_price
+    #     self.max_price = max_price
     
     def __repr__(self) -> str:
         return f"{self.width}/{self.height}R{self.size}"

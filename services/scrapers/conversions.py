@@ -116,12 +116,20 @@ def calculate_euro_category(string: str):
         return string[-1]
 
 
-def hp_to_kw_converter(hp: int):
+def hp_to_kw_converter(hp: str):
     return str(int(hp) * 0.746)
 
+def validate_engine_capacity(string: str):
+    if string.isdigit():
+        return string
+    string = string.replace(",", "") if "," in string else string.replace(".", "")
+    if len(string) == 2:
+        string = str(int(string) * 100)
+    return validate_engine_capacity(string)
 
-def kw_to_hp_convertor(kw: int):
-    pass
+
+def kw_to_hp_convertor(kw: str):
+    return str(int(kw) * 1.34102209)
 
 
 def convert_car_string(string: str):

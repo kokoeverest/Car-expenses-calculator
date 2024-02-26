@@ -5,49 +5,55 @@ import requests
 from bs4 import BeautifulSoup as bs
 import os
 import pickle
+from pydantic import BaseModel
 
 
-class Car:
-    # brand: str
-    # model: str
-    # year: int
-    # engine: Engine | None = None
-    # tax: Tax | None = None
-    # tires: list[Tire]|None = []
-    # price: float | None = None
-    # insurance: int | None = None
+class Car(BaseModel):
 
-    # @classmethod
-    # def create_car(cls, brand, model, year, engine, tax, tires, price):
-    #     return cls(brand = brand,
-    #                model = model,
-    #                year = year,
-    #                engine = engine,
-    #                tax = tax, 
-    #                tires = tires,
-    #                price = price)
+# class Car:
+    brand: str
+    model: str
+    year: str
+    engine: Engine | None = None
+    tax: Tax | None = None
+    tires: list[Tire] = []
+    price: str | None = None
+    insurance: int | None = None
+    fuel_consumption: float | None = None
+    vignette: float | None = None
+    seats: int = 5
+
+    @classmethod
+    def create_car(cls, brand, model, year, engine, tax, tires, price):
+        return cls(brand = brand,
+                   model = model,
+                   year = year,
+                   engine = engine,
+                   tax = tax, 
+                   tires = tires,
+                   price = price)
     
-    def __init__(self, brand: str, model: str, year: str, price: str | None = None):
-        self.brand = brand
-        self.model = model
-        self.year = year
-        self.engine: Engine | None = None
-        self.tax: Tax | None = None 
-        self._tires: list[Tire] = []
-        self.price = price
-        self.insurance = None
-        self.fuel_consumption: float | None = None
-        self.vignette: float | None = None
+    # def __init__(self, brand: str, model: str, year: str, price: str | None = None):
+    #     self.brand = brand
+    #     self.model = model
+    #     self.year = year
+    #     self.engine: Engine | None = None
+    #     self.tax: Tax | None = None 
+    #     self._tires: list[Tire] = []
+    #     self.price = price
+    #     self.insurance = None
+    #     self.fuel_consumption: float | None = None
+    #     self.vignette: float | None = None
 
-    @property
-    def tires(self):
-        if len(self._tires) > 0:
-            return sorted(self._tires, key=lambda t: (t.size, t.width, t.height))
-        return []
+    # @property
+    # def tires(self):
+    #     if len(self._tires) > 0:
+    #         return sorted(self._tires, key=lambda t: (t.size, t.width, t.height))
+    #     return []
 
-    @tires.setter
-    def tires(self, lst):
-        self._tires = lst
+    # @tires.setter
+    # def tires(self, lst):
+    #     self._tires = lst
 
     def __dict__(self):
         return {
@@ -55,7 +61,7 @@ class Car:
             'Модел': self.model,
             'Година': self.year,
             'Двигател': f'{self.engine.capacity} куб.см.' if self.engine else None,
-            'Мощност': f'{self.engine.power_hp} к.с.' if self.engine else None,
+            'Мощност': f'{self.engine.power_hp} кс' if self.engine else None,
             'Гориво': self.engine.fuel_type if self.engine else None,
             'Среден разход': f'{self.fuel_consumption} л/100 км',
             'Цена': f'{self.price}' if self.price else None,
@@ -72,6 +78,7 @@ class Car:
             'Бензин A98': 'gasoline A98',
             'Бензин A100': 'gasoline A100'
         }
+        # db: if there are no prices for today, scrape them
         with open(cwd+"/fuel_prices.txt", "rb") as file:
             try:
                 prices = pickle.load(file)
@@ -84,21 +91,21 @@ class Car:
         result = requests.get(url)
         soup = bs(result.text, features='lxml').find_all('h4')
 
+        prices = {}
         for el in soup:
-            raw = el.text.split(' ')
+            raw: list[str] = el.text.split(" ")
 
-            if len(raw) == 3: 
-                fuel_type, price = str(raw[0] + ' ' + raw[1]), raw[2]
+            if len(raw) == 3:
+                fuel_type, price = " ".join((raw[0], raw[1])), raw[2]
             elif len(raw) == 2:
-                fuel_type, price = raw 
+                fuel_type, price = raw
             else:
                 continue
 
-            if 'цени от' not in price:
-                new_str = fuels_dict.get(fuel_type)
-                fuel_type = fuel_type.replace(f'{fuel_type}', f'{new_str}')
-                prices[fuel_type] = float(price.replace(',', '.').rstrip('лв.'))
-
+            if "цени от" not in price:
+                fuel_type = fuels_dict.get(fuel_type)
+                prices[fuel_type] = float(price.replace(",", ".").rstrip("лв."))
+        # db: save the prices in the database 
         with open(cwd+"/fuel_prices.txt", "wb") as file:
             pickle.dump(prices, file)
             

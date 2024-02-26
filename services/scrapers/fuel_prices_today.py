@@ -17,7 +17,7 @@ def get_fuel_prices(url="https://m.fuelo.net/m/prices"):
     }
 
     result = requests.get(url)
-    soup = bs(result.text).find_all("h4")
+    soup = bs(result.text, features="lxml").find_all("h4")
 
     prices = {}
     for el in soup:

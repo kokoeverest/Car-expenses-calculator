@@ -3,7 +3,7 @@ import pickle
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from scrapers.conversions import wait_for_a_second, price_convertor, find_correct_name
+from services.scrapers.conversions import wait_for_a_second, price_convertor, find_correct_name
 import sys
 sys.path.append('.')
 

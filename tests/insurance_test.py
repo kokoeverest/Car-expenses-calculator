@@ -3,9 +3,9 @@ from selenium import webdriver
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException
-from models.insurance import InsuranceFuelValues as fuel
-from scrapers.insurance import try_click
-from scrapers.conversions import (
+from models.insurance import INSURANCE_FUEL_VALUES as fuel
+from services.scrapers.insurance import try_click
+from services.scrapers.conversions import (
     wait_for_a_second,
     price_convertor,
     engine_size_convertor,
@@ -15,7 +15,7 @@ from scrapers.conversions import (
 test_insurance_data = {
     "year": "2015",
     "engine_size": "2200",
-    "fuel_type": fuel.gasoline.value,
+    "fuel_type": fuel["gasoline"],
     "power": "150",
     "municipality": "София-град",
     "registration": False,

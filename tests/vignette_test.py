@@ -1,5 +1,5 @@
 import unittest
-from scrapers.vignette import get_vignette_price
+from services.scrapers.vignette import get_vignette_price
 
 
 class VignettePageTest(unittest.TestCase):

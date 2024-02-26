@@ -7,7 +7,7 @@ import re
 import sys
 sys.path.append('.')
 from models.tire import Tire
-from scrapers.conversions import wait_for_a_second, convert_car_string
+from services.scrapers.conversions import wait_for_a_second, convert_car_string
 
 
 """This scraper should accept the car object and add the tires sizes and prices to the calculations"""

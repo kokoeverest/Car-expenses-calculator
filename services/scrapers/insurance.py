@@ -5,7 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from scrapers.conversions import (
+from services.scrapers.conversions import (
     wait_for_a_second, 
     price_convertor, 
     engine_size_convertor,
