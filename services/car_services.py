@@ -12,6 +12,7 @@ from services.scrapers.conversions import (
 from services.scrapers.tires import get_tires_prices
 from services.scrapers.tax import get_tax_price
 from services.scrapers.fuel_consumption import get_fuel_consumption
+from services.scrapers.fuel_prices_today import get_fuel_price
 from services.scrapers.insurance import get_insurance_price
 from services.scrapers.vignette import get_vignette_price
 import json
@@ -50,7 +51,7 @@ def build_car(
         fuel_type=fuel_type,  # user input
         capacity=engine_capacity,  # user input
         oil_capacity=None,
-        emissions_category=get_euro_category_from_car_year(car.year),  # or user input
+        emissions_category=get_euro_category_from_car_year(car_year),  # or user input
     )
     try:
         print("Collecting tires prices...")
@@ -90,7 +91,7 @@ def build_car(
     )
     done()
 
-    fuel_per_liter = car.get_fuel_prices(car.engine.fuel_type)
+    fuel_per_liter = get_fuel_price(car.engine.fuel_type)
     fuel_per_30000_km = (fuel_per_liter * car.fuel_consumption) * 300
     fuel_per_10000_km = (fuel_per_liter * car.fuel_consumption) * 100
 
@@ -107,7 +108,7 @@ def build_car(
         driving_experience=None,
     )
     print("Collecting insurance price...")
-    insurance_min, insurance_max = get_insurance_price(insurance.__dict__())
+    insurance_min, insurance_max = get_insurance_price(insurance.to_dict())
     done()
 
     total_min_price = sum(
@@ -119,7 +120,7 @@ def build_car(
         start=0,
     )
 
-    car_dict = car.__dict__()
+    car_dict = car.to_dict()
     result_min = {
         "Обща минимална цена": f"{total_min_price:.2f} лв",
         "Данък": f"{tax_price:.2f} лв",
