@@ -29,6 +29,14 @@ def insert_query(sql: str, sql_params=()):
 
         return cursor.lastrowid
 
+def multiple_insert_queries(queries: list):
+    with _get_connection() as conn:
+        cursor = conn.cursor()
+        for query in queries:
+            cursor.execute(query)
+        conn.commit()
+
+        return cursor.lastrowid
 
 def update_query(sql: str, sql_params=()) -> int:
     with _get_connection() as conn:

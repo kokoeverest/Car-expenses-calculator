@@ -1,43 +1,52 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-import pickle
-import os
+from datetime import date
 import re
 import sys
-sys.path.append('.')
+
+sys.path.append(".")
 from models.tire import Tire
 from services.scrapers.conversions import wait_for_a_second, convert_car_string
-
+from data.db_connect import (
+    read_query,
+    update_query,
+    multiple_insert_queries,
+)
 
 """This scraper should accept the car object and add the tires sizes and prices to the calculations"""
 
+FIND_TIRE_SIZE_PATTERN = r"\d{3}/\d{2}R\d{2}|\d{3}/\d{2}ZR\d{2}"
+TIRES_WEBSITE = "https://www.bggumi.com/"
+
 
 def find_tire_sizes(driver):
-    pattern = r"\d{3}/\d{2}R\d{2}|\d{3}/\d{2}ZR\d{2}"
+    """Search for the available car tires using the regular expression pattern"""
     possible_tire_sizes = set()
     wait_for_a_second()
     table_rows = driver.find_elements(By.TAG_NAME, "tr")
 
     for row in table_rows[1:]:
-        matches = re.findall(pattern, row.text)
-        if len(matches) > 0: 
+        matches = re.findall(FIND_TIRE_SIZE_PATTERN, row.text)
+        if len(matches) > 0:
             possible_tire_sizes.add(*matches)
 
     return possible_tire_sizes
 
 
-def collect_tires_prices(tire_sizes: set|list, driver):
-    url = "https://www.bggumi.com/"
+def collect_tires_prices(tire_sizes: set | list, driver) -> list[Tire] | list:
+    """Search for the minimum and maximum price of each tire in the list.
+    Returns a new list with Tire objects"""
     tires = []
     for size in tire_sizes:
         w, h, i = size[:3], size[4:6], size[-2:]
+        prefix = "ZR" if size[-2:-4] == "ZR" else "R"
         link_url = f"eshop/search?type=1&width={w}&height={h}&inch={i}"
-        
+
         wait_for_a_second()
         # tires are sorted by lowest price by default
-        driver.get(url + link_url)
-        tire = Tire(width=w, height=h, size=i)
+        driver.get(TIRES_WEBSITE + link_url)
+        tire = Tire(width=w, height=h, size=i, prefix=prefix)
         tire.min_price = add_product_price(driver)
 
         wait_for_a_second()
@@ -51,12 +60,12 @@ def collect_tires_prices(tire_sizes: set|list, driver):
 def add_product_price(driver):
     """Get the price of the first found product"""
     wait_for_a_second(1)
-    
-    try: 
+
+    try:
         product = driver.find_element(By.CLASS_NAME, "price").text
-    except Exception: 
+    except Exception:
         return
-    
+
     try:
         matches = re.findall(r"^\d+,\d+|^\d+\.\d+|^\d+", product)
         if len(matches) > 0:
@@ -65,93 +74,110 @@ def add_product_price(driver):
     except Exception:
         try:
             # if the price of one tire is ridiculously high, above 1000 leva, it will be separated by a comma
-            product = product.replace(",", "") 
+            product = product.replace(",", "")
             return float(product)
         except Exception:
             return
 
 
-def start_driver():
-    url = "https://www.bggumi.com/"
-    driver = webdriver.Chrome()
-    wait_for_a_second(1)
-    driver.get(url)
+def start_driver(headless=False):
+    """Start an instance of Chrome webdriver with the headless option off by default"""
+    options = webdriver.ChromeOptions()
+    options.add_argument("--headless=new")
+    driver = webdriver.Chrome(options) if headless else webdriver.Chrome()
+    driver.get(TIRES_WEBSITE)
 
-    return driver 
+    return driver
 
 
 def get_tires_prices(search: list):
+    """The main logic of this scraper -> look for the tires sizes and prices in the database and if some
+    of the info is missing, scrape it from the website and update the database"""
+
     search = [convert_car_string(el) for el in search]
-    cwd = os.getcwd()
-    driver = None
-    # looking for the tire sizes of the car brand, model and year in the file
-    with open(cwd+"/car_tires.txt", "rb") as file:
-        try:
-            data: dict[dict, dict[dict, dict[str, list]]] = pickle.load(file)
-        except EOFError:
-            data = {}
-    all_tire_sizes = set()
     brand, model, year = search
-    try:
-        possible_sizes = data[brand][model][year]
-    except KeyError:
-        possible_sizes = []
-        
-    if len(possible_sizes) == 0:
-        driver = start_driver()
+
+    # looking for the tire sizes of the car brand, model and year in the database
+    possible_sizes: list | tuple = next(
+        iter(
+            read_query(
+                f"""CALL `Car Expenses`.`get_tires`('{brand}', '{model}', {year});"""
+            )
+        ),
+        [],
+    )
+    if len(possible_sizes) > 0 and isinstance(
+        possible_sizes, tuple
+    ):  # could it be other type?
+        possible_sizes = re.findall(FIND_TIRE_SIZE_PATTERN, possible_sizes[0])
+
+    if not possible_sizes:
+        possible_sizes = scrape_possible_tires(brand, model, year)
+        if not possible_sizes:
+            return possible_sizes
+        update_query(
+            f"""
+            CALL `Car Expenses`.`update_car_tires`('{brand}', '{model}', {year}, "{possible_sizes}");"""
+        )
+    # then look for the price of each tire and see if there are missing records in the database
+    existing_tires = return_list_with_tire_objects(possible_sizes)
+    missing_sizes = set(possible_sizes).difference(
+        set(str(tire) for tire in existing_tires)
+    )
+
+    if not missing_sizes:
+        return existing_tires
+
+    # if there are missing tires in the file - scrape them and update the info for each tire
+    today = date.today()
+    collected_tires = []
+    missing_query = []
+
+    with start_driver(headless=True) as driver:
+        collected_tires = collect_tires_prices(missing_sizes, driver)
+
+    for tire in collected_tires:
+        missing_query.append(
+            f"""call `Car Expenses`.add_tire('{tire.prefix}', '{tire.width}', '{tire.height}', '{tire.size}',\
+                {tire.min_price}, {tire.max_price}, '{today}');"""
+        )
+
+    _ = multiple_insert_queries(missing_query)
+
+    return list(set(collected_tires + existing_tires))
+
+
+def scrape_possible_tires(brand, model, year):
+    """Start the webdriver and search for the possible tire sizes for that car model"""
+
+    with start_driver(headless=True) as driver:
         Select(driver.find_element(By.ID, "makers")).select_by_value(brand)
         wait_for_a_second()
         Select(driver.find_element(By.ID, "models")).select_by_value(model)
         wait_for_a_second()
         Select(driver.find_element(By.ID, "years")).select_by_value(year)
         wait_for_a_second()
-        button = driver.find_element(By.ID, 'get_wheelsize')
+        button = driver.find_element(By.ID, "get_wheelsize")
         wait_for_a_second(1)
         button.click()
 
         possible_sizes = find_tire_sizes(driver)
-        if len(possible_sizes) > 0:
-            all_tire_sizes.update(possible_sizes)
 
-        if brand not in data.keys(): 
-            data[brand] = {}
-        if model not in data[brand]:
-            data[brand][model] = {}
-        if year not in data[brand][model]:
-            data[brand][model][year] = []
-        data[brand][model][year] = list(possible_sizes)
+    return list(sorted(possible_sizes))
 
-        # write the new car data to the file
-        with open(cwd+"/car_tires.txt", "wb") as file:
-            pickle.dump(data, file)
 
-    # then look for the price of each tire in the file
-    with open(os.getcwd()+"/tires_prices_final.txt", "rb") as sizes_file:
-        try:
-            existing_sizes: dict = pickle.load(sizes_file)
-        except EOFError:
-            existing_sizes = {}
+def return_list_with_tire_objects(possible_sizes_list: list):
+    """Retrieve info from the database for each tire in the list and convert it in a Tire object"""
 
-    final_result = []
-    if len(existing_sizes) > 0:
-        for tire in possible_sizes:
-            if tire in existing_sizes:
-                final_result.append(existing_sizes.get(tire))
+    read_query_result = "SELECT `Prefix`, `Width`, `Height`, `Radius`, `Min price`, `Max price` FROM Tires WHERE "
 
-    #if there are missing tires in the file - scrape them and update the file with the prices for each tire
-    if len(final_result) == 0:
-        if not driver: 
-            driver = start_driver()
-        final_result = collect_tires_prices(possible_sizes, driver)
-        for tire in possible_sizes:
-            try:
-                res = collect_tires_prices([tire], driver)
-                existing_sizes[str(tire)] = next(iter(res), None)
-            except Exception:
-                continue
-        with open(os.getcwd()+"/tires_prices_final.txt", "wb") as file3:
-            pickle.dump(existing_sizes, file3)
-    if driver:
-        driver.close()
+    for tire_size in possible_sizes_list:
+        w, h, i = tire_size[:3], tire_size[4:6], tire_size[-2:]
+        read_query_result += (
+            f" (`Width` = '{w}' AND `Height` = '{h}' AND `Radius` = '{i}') OR"
+        )
+    result = read_query(read_query_result.removesuffix(" OR"))
 
-    return final_result
+    return_list = [Tire.from_query(*el) for el in result]
+
+    return return_list

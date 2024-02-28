@@ -1,6 +1,6 @@
 import requests
 from bs4 import BeautifulSoup as bs
-from data.db_connect import read_query, insert_query
+from data.db_connect import read_query, multiple_insert_queries
 from datetime import date
 import sys
 
@@ -20,9 +20,9 @@ FUELS_DICT = {
 def scrape_fuel_prices(url="https://m.fuelo.net/m/prices"):
     result = requests.get(url)
     soup = bs(result.text, features="lxml").find_all("h4")
-
+    today = date.today()
     prices = {}
-    query = ""
+    query = []
     for el in soup:
         raw: list[str] = el.text.split(" ")
 
@@ -37,7 +37,9 @@ def scrape_fuel_prices(url="https://m.fuelo.net/m/prices"):
             fuel_type = FUELS_DICT.get(fuel_type)
             temp_price = float(temp_price.replace(",", ".").rstrip("лв."))
             prices[fuel_type] = temp_price
-            query += f"CALL `Car Expenses`.update_fuel_price('{fuel_type}', {temp_price}, '{date.today()}');"
+            query.append(
+                f"CALL `Car Expenses`.`update_fuel_price`('{fuel_type}', {temp_price}, '{today}');"
+            )
 
     return prices, query
 
@@ -52,5 +54,5 @@ def get_fuel_price(f_type) -> float:
 
     prices, query = scrape_fuel_prices()
 
-    insert_query(query)  # update the fuel prices for today
+    multiple_insert_queries(query)  # update the fuel prices for today
     return prices[f_type]

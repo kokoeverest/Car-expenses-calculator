@@ -34,9 +34,7 @@ CREATE TABLE IF NOT EXISTS `Car Expenses`.`Cars` (
   `Oil price` FLOAT NULL DEFAULT 0,
   `Brake pads price` FLOAT NULL DEFAULT 0,
   `Price` FLOAT NULL DEFAULT 0,
-  PRIMARY KEY (`id`),
-  UNIQUE INDEX `Brand_UNIQUE` (`Brand` ASC) VISIBLE,
-  UNIQUE INDEX `Model_UNIQUE` (`Model` ASC) VISIBLE)
+  PRIMARY KEY (`id`))
 ENGINE = InnoDB
 AUTO_INCREMENT = 3
 DEFAULT CHARACTER SET = utf8mb4;
@@ -70,6 +68,7 @@ CREATE TABLE IF NOT EXISTS `Car Expenses`.`Tires` (
   `Radius` VARCHAR(45) NOT NULL,
   `Min price` FLOAT NULL DEFAULT 0,
   `Max price` FLOAT NULL DEFAULT 0,
+  `Date` DATE NOT NULL,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
