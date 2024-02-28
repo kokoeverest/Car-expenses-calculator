@@ -22,7 +22,7 @@ class Insurance(BaseModel):
     driver_age: str | None = None
     driving_experience: str | None = None
 
-    def __dict__(self):
+    def to_dict(self):
         return {
             "year": self.year,
             "engine_size": self.engine_size,

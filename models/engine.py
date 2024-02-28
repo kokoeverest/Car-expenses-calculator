@@ -20,16 +20,5 @@ class Engine(BaseModel):
             oil_capacity = oil_capacity, 
             emissions_category = emissions_category)
     
-    # def __init__(self, 
-    #     power_hp: str, 
-    #     capacity: str, 
-    #     emissions_category: str, 
-    #     fuel_type: str,  
-    #     oil_capacity: str | None
-    #     ):
-
-        # self.power_hp = power_hp
-        # self.fuel_type = fuel_type 
-        # self.capacity = capacity
-        # self.oil_capacity = oil_capacity
-        # self.emissions_category = emissions_category
+    def __repr__(self) -> str:
+        return f"{__class__}, capacity: {self.capacity}, {self.fuel_type}, {self.power_hp}"

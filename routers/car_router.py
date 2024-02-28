@@ -6,7 +6,7 @@ import sys
 
 sys.path.append(".")
 
-car_router = APIRouter(prefix="")
+car_router = APIRouter(prefix="/api")
 
 
 @car_router.get("/", tags=["Car price builder"], responses=car_responses)

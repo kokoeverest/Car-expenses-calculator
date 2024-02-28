@@ -1,8 +1,8 @@
-import os
-import pickle
-import json
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.select import Select
+from data.db_connect import read_query, insert_query
+from datetime import date
 import sys
 
 sys.path.append(".")
@@ -10,17 +10,6 @@ from services.scrapers.conversions import (
     age_convertor,
     calculate_euro_category,
 )
-
-
-def extract_option_or_input_fields(elem, value, field_name="option"):
-    options = elem.find_elements(By.TAG_NAME, field_name)
-    result = []
-    for option in options:
-        result.append(option.text)
-        opt_value = option.get_attribute("value")
-        if opt_value == value and field_name == "option":
-            option.click()
-    return set(result)
 
 
 def start_driver():
@@ -40,47 +29,45 @@ def generate_car_data_dict(
 
 
 def get_tax_price(car_data: list):
-    car_data_dict = generate_car_data_dict(*car_data)
-    json_data = json.dumps(
-        car_data_dict, indent=2, ensure_ascii=False, separators=("", " - ")
+    car_data[1] = next(
+        iter(read_query(f"CALL `Car Expenses`.`get_municipality`('{car_data[0]}');"))
+    )[0]
+    tax_price = next(
+        iter(
+            read_query(
+                "CALL `Car Expenses`.`get_tax_price`(?, ?, ?, ?, ?);", tuple(car_data)
+            )
+        ),
+        None,
     )
-    cwd = os.getcwd()
+    if tax_price:
+        return float(tax_price[0])
 
-    with open(cwd + "/taxes.txt", "rb") as file:
-        try:
-            tax_price = pickle.load(file)
-            return tax_price[json_data]
-        except EOFError:
-            tax_price = {}
-        except KeyError:
-            tax_price = tax_price  # type: ignore
-
-    driver = start_driver()
-    all_options = {}
-    for k, v in car_data_dict.items():
-        try:
-            el = driver.find_element(By.XPATH, f"//select[@name='{k}']")
-            all_options[k] = extract_option_or_input_fields(el, v)
-        except Exception:
-            # the 'kw' input field
+    car_data_dict = generate_car_data_dict(*car_data)
+    with start_driver() as driver:
+        for k, v in car_data_dict.items():
             try:
-                el = driver.find_element(By.XPATH, f"//input[@name='{k}']")
-                all_options[k] = extract_option_or_input_fields(
-                    el, v, field_name="input"
-                )
-                el.clear()
-                el.send_keys(v)
-                el.submit()
+                el = Select(
+                    driver.find_element(By.XPATH, f"//select[@name='{k}']")
+                ).select_by_value(v)
             except Exception:
-                continue
-    try:
-        price = driver.find_element(By.CLASS_NAME, "amount").text.split(" ")[0]
-    except IndexError:
-        price = "0"
+                # the 'kw' input field
+                try:
+                    el = driver.find_element(By.XPATH, f"//input[@name='{k}']")
+                    el.clear()
+                    el.send_keys(v)
+                    el.submit()
+                except Exception:
+                    continue
+        try:
+            price = driver.find_element(By.CLASS_NAME, "amount").text.split(" ")[0]
+        except IndexError:
+            price = "0"
 
-    tax_price[json_data] = price
+    car_data.extend([float(price), date.today()])
 
-    with open(cwd + "/taxes.txt", "wb") as file:
-        pickle.dump(tax_price, file)
+    _ = insert_query(
+        "CALL `Car Expenses`.`add_tax_price`(?,?,?,?,?,?,?);", tuple(car_data)
+    )
 
-    return price
+    return float(price)

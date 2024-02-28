@@ -89,7 +89,7 @@ ENGINE = InnoDB;
 -- Table `Car Expenses`.`Taxes`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `Car Expenses`.`Taxes` (
-  `id` INT NOT NULL,
+  `id` INT NOT NULL AUTO_INCREMENT,
   `City` VARCHAR(45) NOT NULL,
   `Municipality` VARCHAR(45) NOT NULL,
   `Euro category` VARCHAR(45) NOT NULL,

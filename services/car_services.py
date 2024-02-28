@@ -29,6 +29,9 @@ def build_car(
     engine_capacity: str,
     city: str,
     car_price: str | None = None,
+    registration: bool = False,
+    driver_age: str | None = None,
+    driver_experience: str | None = None,
 ):
     engine_capacity = validate_engine_capacity(engine_capacity)
     car_power_hp = (
@@ -57,17 +60,16 @@ def build_car(
         print("Collecting tires prices...")
         car.tires = get_tires_prices([car.brand, car.model, car.year])
         done()
-    except Exception:
+    except Exception as e:
         # return the prices of the most common tire sizes instead of *No info*
-        done("***Error while collecting tires prices***")
+        done(str(e))
         car.tires = []
-
     car.tax = Tax(
         city=city,  # user input
-        municipality="Столична",  # to be extracted from the user input
+        municipality=city,
         car_age=car.year,
         euro_category=car.engine.emissions_category,
-        car_power_kw=car.engine.power_hp,
+        car_power_kw=car.engine.power_kw,
     )
     print("Collecting fuel consumption...")
     car.fuel_consumption = get_fuel_consumption(
@@ -78,17 +80,16 @@ def build_car(
     car.vignette = get_vignette_price()
     done()
     print("Collecting tax price...")
-    tax_price = float(
-        get_tax_price(
-            [
-                car.tax.city,
-                car.tax.municipality,
-                car.tax.car_age,
-                car.tax.euro_category,
-                car.tax.car_power_kw,
-            ]
-        )
+    tax_price = get_tax_price(
+        [
+            car.tax.city,
+            car.tax.municipality,
+            car.tax.car_age,
+            car.tax.euro_category,
+            car.tax.car_power_kw,
+        ]
     )
+
     done()
 
     fuel_per_liter = get_fuel_price(car.engine.fuel_type)
