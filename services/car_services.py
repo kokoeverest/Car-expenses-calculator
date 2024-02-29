@@ -15,47 +15,47 @@ from services.scrapers.fuel_consumption import get_fuel_consumption
 from services.scrapers.fuel_prices_today import get_fuel_price
 from services.scrapers.insurance import get_insurance_price
 from services.scrapers.vignette import get_vignette_price
+from common.exceptions import WrongCarData
 import json
 from datetime import datetime
+from data.db_connect import read_query
 
 
 def build_car(
-    car_brand: str,
-    car_model: str,
-    car_year: str,
-    car_power_hp: str,
-    car_power_kw: str,
-    fuel_type: str,
+    c_brand: str,
+    c_model: str,
+    c_year: str,
+    c_power_hp: str,
+    c_power_kw: str,
+    f_type: str,
     engine_capacity: str,
     city: str,
-    car_price: str | None = None,
-    registration: bool = False,
+    c_price: str | None = None,
+    reg: bool = False,
     driver_age: str | None = None,
     driver_experience: str | None = None,
 ):
     engine_capacity = validate_engine_capacity(engine_capacity)
-    car_power_hp = (
-        kw_to_hp_convertor(car_power_kw) if not car_power_hp else car_power_hp
-    )
-    car_power_kw = (
-        hp_to_kw_converter(car_power_hp) if not car_power_kw else car_power_kw
-    )
+    c_power_hp = kw_to_hp_convertor(c_power_kw) if not c_power_hp else c_power_hp
+    c_power_kw = hp_to_kw_converter(c_power_hp) if not c_power_kw else c_power_kw
 
     start = datetime.now()
-    car: Car = Car(
-        brand=car_brand,  # user input
-        model=car_model,  # user input
-        year=car_year,  # user input
-        price=car_price,  # user input /optional/
+    car: Car | None = get_car(
+        c_brand, c_model, c_year, engine_capacity, c_power_hp, f_type
     )
-    car.engine = Engine(
-        power_hp=car_power_hp,  # user input
-        power_kw=car_power_kw,  # user input
-        fuel_type=fuel_type,  # user input
-        capacity=engine_capacity,  # user input
-        oil_capacity=None,
-        emissions_category=get_euro_category_from_car_year(car_year),  # or user input
-    )
+    if not car:
+        raise WrongCarData()
+
+    if not car.engine: # create a new engine record and update the database
+        car.engine = Engine(
+            power_hp=c_power_hp,  # user input
+            power_kw=c_power_kw,  # user input
+            fuel_type=f_type,  # user input
+            capacity=engine_capacity,  # user input
+            oil_capacity=None,
+            emissions_category=get_euro_category_from_car_year(c_year),  # or user input
+            consumption=get_fuel_consumption(car),
+        )
     try:
         print("Collecting tires prices...")
         car.tires = get_tires_prices([car.brand, car.model, car.year])
@@ -71,11 +71,9 @@ def build_car(
         euro_category=car.engine.emissions_category,
         car_power_kw=car.engine.power_kw,
     )
-    print("Collecting fuel consumption...")
-    car.fuel_consumption = get_fuel_consumption(
-        [car.brand, car.model, car.year, car.engine.fuel_type, car.engine.power_hp]
-    )
-    done()
+    # print("Collecting fuel consumption...")
+    # car.engine.consumption =
+    # done()
     print("Collecting vignette price...")
     car.vignette = get_vignette_price()
     done()
@@ -93,15 +91,15 @@ def build_car(
     done()
 
     fuel_per_liter = get_fuel_price(car.engine.fuel_type)
-    fuel_per_30000_km = (fuel_per_liter * car.fuel_consumption) * 300
-    fuel_per_10000_km = (fuel_per_liter * car.fuel_consumption) * 100
+    fuel_per_30000_km = (fuel_per_liter * car.engine.consumption) * 300
+    fuel_per_10000_km = (fuel_per_liter * car.engine.consumption) * 100
 
     tires_max_price, tires_min_price = car.calculate_tires_price()
 
     insurance = Insurance(
         year=car.year,
         engine_size=car.engine.capacity,
-        fuel_type=fuel[fuel_type],
+        fuel_type=fuel[f_type],
         power=car.engine.power_hp,
         municipality="София-град",  # regex needed to match car.tax.city
         registration=False,
@@ -155,3 +153,28 @@ def build_car(
     diff = end - start
     print(f"Search duration: {diff}")
     return final_result
+
+
+def get_car(brand: str, model: str, year: str, e_capacity, e_power, f_type):
+    result = next(
+        iter(
+            read_query(
+                f"CALL `Car Expenses`.`get_car`('{brand}', '{model}', '{year}');"
+            )
+        )
+    )
+
+    if not result:
+        return
+    car = Car.create_car(*result)
+
+    engine_data = next(
+        iter(
+            read_query(
+                f"""CALL `Car Expenses`.`test_get_engine`({car.id}, '{e_capacity}', {e_power}, '{f_type}');"""
+            )
+        )
+    )
+    car.engine = Engine.from_query(*engine_data[2:])
+
+    return car

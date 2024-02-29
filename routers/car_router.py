@@ -1,5 +1,7 @@
-from typing import Annotated
-from fastapi import APIRouter, Form
+# from typing import Annotated
+from common.exceptions import WrongCarData
+from fastapi import APIRouter, Response, status  # , Form
+from fastapi.responses import JSONResponse
 import services.car_services as cs
 from routers.responses import car_responses
 import sys
@@ -32,6 +34,31 @@ def get_car_prices(
     power_kw: str = "",
     car_price: str | None = None,
 ):
-    car = cs.build_car(brand, model, year, power_hp, power_kw, fuel_type, engine_capacity, city, car_price)
-
-    return car
+    try:
+        car = cs.build_car(
+            brand,
+            model,
+            year,
+            power_hp,
+            power_kw,
+            fuel_type,
+            engine_capacity,
+            city,
+            car_price,
+        )
+    except RecursionError:
+        return Response(
+            content="Invalid engine capacity! (No whitespaces, please)",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    except WrongCarData:
+        return Response(
+            status_code=status.HTTP_204_NO_CONTENT,
+        )
+    except Exception as e:
+        print(str(e))
+        return Response(
+            content="Something went wrong",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    return JSONResponse(car)

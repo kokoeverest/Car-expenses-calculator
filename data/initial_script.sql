@@ -27,13 +27,7 @@ CREATE TABLE IF NOT EXISTS `Car Expenses`.`Cars` (
   `Year` INT(11) NOT NULL,
   `Seats` INT(11) NULL DEFAULT 5,
   `Tires` TEXT NULL DEFAULT NULL,
-  `Insurance price` FLOAT NULL DEFAULT 0,
-  `Registration price` FLOAT NULL DEFAULT 0,
   `Vignette price` FLOAT NULL DEFAULT 87,
-  `Inspection price` FLOAT NULL DEFAULT 0,
-  `Oil price` FLOAT NULL DEFAULT 0,
-  `Brake pads price` FLOAT NULL DEFAULT 0,
-  `Price` FLOAT NULL DEFAULT 0,
   PRIMARY KEY (`id`))
 ENGINE = InnoDB
 AUTO_INCREMENT = 3
@@ -45,9 +39,9 @@ DEFAULT CHARACTER SET = utf8mb4;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `Car Expenses`.`Engines` (
   `id` INT NOT NULL AUTO_INCREMENT,
-  `Capacity` INT NOT NULL,
-  `Power_hp` FLOAT NOT NULL,
-  `Power_kw` FLOAT NOT NULL,
+  `Capacity` VARCHAR(45) NOT NULL,
+  `Power_hp` VARCHAR(45) NOT NULL,
+  `Power_kw` VARCHAR(45) NOT NULL,
   `Fuel type` VARCHAR(45) NOT NULL,
   `Emmissions category` VARCHAR(45) NOT NULL,
   `Consumption` FLOAT NULL,

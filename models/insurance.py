@@ -13,7 +13,7 @@ INSURANCE_FUEL_VALUES = {
 }
 
 class Insurance(BaseModel):
-    year: str
+    year: str | int
     engine_size: str
     fuel_type: str
     power: str

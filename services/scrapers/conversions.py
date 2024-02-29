@@ -120,7 +120,7 @@ def hp_to_kw_converter(hp: str):
     return str(int(hp) * 0.746)
 
 def validate_engine_capacity(string: str):
-    if string.isdigit():
+    if string.isdigit() and len(string) > 2:
         return string
     string = string.replace(",", "") if "," in string else string.replace(".", "")
     if len(string) == 2:

@@ -16,6 +16,10 @@ car_responses: dict[int | str, dict[str, Any]] | None = {
         "description": "No content",
         "content": {"application/json": {"example": "No car data!"}},
     },
+    400: {
+        "description": "Bad request",
+        "content": {"application/json": {"example": "Invalid engine capacity! (No whitespaces, please)"}},
+    },
     404: {
         "description": "Not Found",
         "content": {"application/json": {"example": "Not found!"}},

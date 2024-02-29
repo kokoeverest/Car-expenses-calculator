@@ -4,7 +4,7 @@ from pydantic import BaseModel
 class Tax(BaseModel):
     city: str | None
     municipality: str | None
-    car_age: str | None
+    car_age: str | int | None
     euro_category: str | None
     car_power_kw: str | None
     price: float = 0
