@@ -4,10 +4,11 @@ from selenium.webdriver.support.select import Select
 from datetime import date
 import re
 import sys
+from models.car import Car
 
 sys.path.append(".")
 from models.tire import Tire
-from services.scrapers.conversions import wait_for_a_second, convert_car_string
+from services.scrapers.conversions import wait_for_a_second
 from data.db_connect import (
     read_query,
     update_query,
@@ -90,34 +91,22 @@ def start_driver(headless=False):
     return driver
 
 
-def get_tires_prices(search: list):
+def get_tires_prices(car: Car):
     """The main logic of this scraper -> look for the tires sizes and prices in the database and if some
     of the info is missing, scrape it from the website and update the database"""
+    # empty_list = "[]"
+    # possible_sizes = []
 
-    search = [convert_car_string(el) for el in search]
-    brand, model, year = search
-
-    # looking for the tire sizes of the car brand, model and year in the database
-    possible_sizes: list | tuple = next(
-        iter(
-            read_query(
-                f"""CALL `Car Expenses`.`get_tires`('{brand}', '{model}', {year});"""
-            )
-        ),
-        [],
-    )
-    if len(possible_sizes) > 0 and isinstance(
-        possible_sizes, tuple
-    ):  # could it be other type?
-        possible_sizes = re.findall(FIND_TIRE_SIZE_PATTERN, possible_sizes[0])
+    possible_sizes = re.findall(FIND_TIRE_SIZE_PATTERN, car.tires) # type: ignore
+    # if not car.tires == empty_list:  # could it be other type?
 
     if not possible_sizes:
-        possible_sizes = scrape_possible_tires(brand, model, year)
+        possible_sizes = scrape_possible_tires(car.brand, car.model, car.year)
         if not possible_sizes:
             return possible_sizes
         update_query(
             f"""
-            CALL `Car Expenses`.`update_car_tires`('{brand}', '{model}', {year}, "{possible_sizes}");"""
+            CALL `Car Expenses`.`update_car_tires`('{car.brand}', '{car.model}', {car.year}, "{possible_sizes}");"""
         )
     # then look for the price of each tire and see if there are missing records in the database
     existing_tires = return_list_with_tire_objects(possible_sizes)

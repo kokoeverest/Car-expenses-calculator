@@ -27,6 +27,8 @@ def start_driver(url):
 
 def get_vignette_price(url='https://vinetki.bg/prices'):
     response = requests.get(url)
-    soup = bs(response.text, features="lxml").find_all('td', string=re.compile('ГОДИШНА'))
+    soup = bs(response.text, features="lxml")
+    soup = soup.find_all('td', string=re.compile('ГОДИШНА'))
     price = list(soup[0].next_elements)[4].rstrip(' лв.').replace(',', '.')
+    
     return float(price)

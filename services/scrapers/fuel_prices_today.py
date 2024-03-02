@@ -54,5 +54,5 @@ def get_fuel_price(f_type) -> float:
 
     prices, query = scrape_fuel_prices()
 
-    multiple_insert_queries(query)  # update the fuel prices for today
+    _ = multiple_insert_queries(query)  # update the fuel prices for today
     return prices[f_type]

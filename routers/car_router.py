@@ -1,6 +1,6 @@
-# from typing import Annotated
+from typing import Annotated
 from common.exceptions import WrongCarData
-from fastapi import APIRouter, Response, status  # , Form
+from fastapi import APIRouter, Response, status, Form
 from fastapi.responses import JSONResponse
 import services.car_services as cs
 from routers.responses import car_responses
@@ -8,21 +8,10 @@ import sys
 
 sys.path.append(".")
 
-car_router = APIRouter(prefix="/api")
+car_router = APIRouter()
 
 
-@car_router.get("/", tags=["Car price builder"], responses=car_responses)
-# def get_car_prices(
-#     brand: Annotated[str, Form()],
-#     model: Annotated[str, Form()],
-#     year: Annotated[str, Form()],
-#     fuel_type: Annotated[str, Form()],
-#     engine_capacity: Annotated[str, Form()],
-#     city: Annotated[str, Form()],
-#     power_hp: Annotated[str, Form()] = "",
-#     power_kw: Annotated[str, Form()] = "",
-#     car_price: Annotated[str, Form()] | None = None,
-# ):
+@car_router.get("/api/", tags=["Car price API"], responses=car_responses)
 def get_car_prices(
     brand: str,
     model: str,
@@ -62,3 +51,18 @@ def get_car_prices(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     return JSONResponse(car)
+
+
+@car_router.get("/", tags=["Car price client form"], responses=car_responses)
+def get_car_prices_from_form(
+    brand: Annotated[str, Form()],
+    model: Annotated[str, Form()],
+    year: Annotated[str, Form()],
+    fuel_type: Annotated[str, Form()],
+    engine_capacity: Annotated[str, Form()],
+    city: Annotated[str, Form()],
+    power_hp: Annotated[str, Form()] = "",
+    power_kw: Annotated[str, Form()] = "",
+    car_price: Annotated[str, Form()] | None = None,
+):
+    pass

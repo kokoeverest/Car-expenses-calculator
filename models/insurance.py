@@ -12,15 +12,68 @@ INSURANCE_FUEL_VALUES = {
     "lpg_cng_only": "8",
 }
 
+
 class Insurance(BaseModel):
-    year: str | int
+    year: str
     engine_size: str
     fuel_type: str
     power: str
-    municipality: str  # regex needed to match car.tax.city
+    municipality: str
     registration: bool = False
     driver_age: str | None = None
-    driving_experience: str | None = None
+    driving_experience: str = "5"
+    min_price: float = 0
+    max_price: float = 0
+
+    @classmethod
+    def from_query(
+        cls,
+        year,
+        engine_size,
+        fuel_type,
+        power,
+        municipality,
+        registration,
+        driver_age,
+        driving_experience,
+        min_price,
+        max_price,
+    ):
+        return cls(
+            year=year,
+            engine_size=engine_size,
+            fuel_type=fuel_type,
+            power=power,
+            municipality=municipality,
+            registration=registration,
+            driver_age=driver_age,
+            driving_experience=driving_experience,
+            min_price=min_price,
+            max_price=max_price,
+        )
+
+    @classmethod
+    def from_list(
+        cls,
+        year,
+        engine_size,
+        fuel_type,
+        power,
+        municipality,
+        registration,
+        driver_age,
+        driving_experience,
+    ):
+        return cls(
+            year=year,
+            engine_size=engine_size,
+            fuel_type=fuel_type,
+            power=power,
+            municipality=municipality,
+            registration=registration,
+            driver_age=driver_age,
+            driving_experience=driving_experience,
+        )
 
     def to_dict(self):
         return {

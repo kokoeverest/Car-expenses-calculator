@@ -8,7 +8,7 @@ class Car(BaseModel):
     id: int | None = None
     brand: str
     model: str
-    year: str | int
+    year: str#| int
     engine: Engine | None = None
     tax: Tax | None = None
     tires: list[Tire] | str = [] 
@@ -30,16 +30,17 @@ class Car(BaseModel):
         )
 
     def to_dict(self):
-        return {
-            "Марка": self.brand,
-            "Модел": self.model,
-            "Година": self.year,
-            "Двигател": f"{self.engine.capacity} куб.см." if self.engine else None,
-            "Мощност": f"{self.engine.power_hp} кс" if self.engine else None,
-            "Гориво": self.engine.fuel_type if self.engine else None,
-            "Среден разход": f"{self.engine.consumption} л/100 км" if self.engine else None,
-            "Цена": f"{self.price}" if self.price else None,
-        }
+        if self.engine is not None:
+            return {
+                "Марка": self.brand,
+                "Модел": self.model,
+                "Година": self.year,
+                "Двигател": f"{self.engine.capacity} куб.см.",
+                "Мощност": f"{self.engine.power_hp} кс",
+                "Гориво": self.engine.fuel_type,
+                "Среден разход": f"{self.engine.consumption:.2f} л/100 км",
+                "Цена": f"{self.price}" if self.price else None,
+            }
 
     def calculate_tires_price(self):
         max_price = max(

@@ -1,52 +1,61 @@
-import os
-import pickle
+from data.db_connect import insert_query
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
-from services.scrapers.conversions import wait_for_a_second, price_convertor, find_correct_name
+from models.car import Car
+from common.exceptions import FuelConsumptionError
+from services.scrapers.conversions import (
+    wait_for_a_second,
+    price_convertor,
+    find_correct_name,
+)
 import sys
-sys.path.append('.')
+
+sys.path.append(".")
 
 
 def find_fuel_consumption(
-        brand: str, 
-        model: str, 
-        year_from: str, 
-        year_to: str, 
-        fuel_type: str, 
-        power_from: str, 
-        power_to: str,
-        avg_consumption = '0'
-    ):
-    wait_for_a_second(1)
-    driver = start_driver()
-    brand = find_correct_name(brand, {opt.text for opt in Select(driver.find_element(By.ID, "manuf")).options})
-    if brand != "":
-        Select(driver.find_element(By.ID, "manuf")).select_by_visible_text(brand)
-    wait_for_a_second(1)
-    try:
-        model = find_correct_name(model, {opt.text for opt in Select(driver.find_element(By.ID, "model")).options})
-        if model != "":
-            Select(driver.find_element(By.ID, "model")).select_by_visible_text(model)
-        Select(driver.find_element(By.ID, "fueltype")).select_by_visible_text(fuel_type.capitalize())
-        driver.find_element(By.ID, "constyear_s").send_keys(year_from)
-        driver.find_element(By.ID, "constyear_e").send_keys(year_to)
-        driver.find_element(By.ID, "power_s").send_keys(int(power_from) - 10)
-        driver.find_element(By.ID, "power_e").send_keys(int(power_to) + 10)
-        driver.find_element(By.XPATH, "//*[@id='add']").submit()
-        wait_for_a_second()
-        avg_consumption = driver.find_element(By.CLASS_NAME, "consumption").text            
-    except Exception as e:
-        print(e)
-        
+    brand: str, model: str, year: str, fuel_type: str, power: str, avg_consumption="0"
+):
+    # wait_for_a_second(1)
+    with start_driver() as driver:
+        brand = find_correct_name(
+            brand,
+            {opt.text for opt in Select(driver.find_element(By.ID, "manuf")).options},
+        )
+        if brand != "":
+            Select(driver.find_element(By.ID, "manuf")).select_by_visible_text(brand)
+        wait_for_a_second(1)
+        try:
+            model = find_correct_name(
+                model,
+                {
+                    opt.text
+                    for opt in Select(driver.find_element(By.ID, "model")).options
+                },
+            )
+            if model != "":
+                Select(driver.find_element(By.ID, "model")).select_by_visible_text(
+                    model
+                )
+            Select(driver.find_element(By.ID, "fueltype")).select_by_visible_text(
+                fuel_type.capitalize()
+            )
+            driver.find_element(By.ID, "constyear_s").send_keys(year)
+            driver.find_element(By.ID, "constyear_e").send_keys(year)
+            driver.find_element(By.ID, "power_s").send_keys(int(power) - 10)
+            driver.find_element(By.ID, "power_e").send_keys(int(power) + 10)
+            driver.find_element(By.XPATH, "//*[@id='add']").submit()
+            wait_for_a_second()
+            avg_consumption = driver.find_element(By.CLASS_NAME, "consumption").text
+        except Exception as e:
+            print(e)
+
     return avg_consumption
 
 
 def start_driver():
     driver = webdriver.Chrome()
-
-    # the url of the fuel consumption website
-    # huge database of user records about thier vehicle's fuel consumption
     url = "https://www.spritmonitor.de/en/search.html"
     wait_for_a_second(1)
     driver.get(url)
@@ -64,46 +73,40 @@ def start_driver():
         print(str(e))
         pass
 
-    return driver 
+    return driver
 
 
-def get_fuel_consumption(car_data: list[str]):
-    # try to find the fuel consumption locally
-    cwd = os.getcwd()
-    with open(cwd+"/fuel_consumption.txt", "rb") as file:
-        try:
-            all_cars_dict = pickle.load(file)
-        except EOFError:
-            all_cars_dict = {}
-
-    if all(car_data):
-        brand, model, year, fuel_type, power = car_data
-        
-        try:
-            avg_consumption = all_cars_dict[brand][model][fuel_type][year][power]
-        except KeyError:
-            avg_consumption = '0'
-
-        # if such record does not exist, start the driver and scrape it from the website
-        if avg_consumption == '0':
-            avg_consumption = find_fuel_consumption(
-                brand, model, year, year, fuel_type, power, power
+def get_fuel_consumption(car: Car):
+    # if such record does not exist, start the driver and scrape it from the website
+    if car.engine is not None:
+        avg_consumption = find_fuel_consumption(
+            car.brand,
+            car.model,
+            car.year,
+            car.engine.fuel_type,
+            car.engine.power_hp,
+        )
+        if avg_consumption != "0":
+            # insert into the database, don't forget to update the cars_engines table!
+            car.engine.consumption = price_convertor(avg_consumption)
+            car.engine.id = insert_query(
+                """INSERT INTO `Car Expenses`.`Engines`
+            (`Capacity`,`Power_hp`,`Power_kw`,`Fuel type`,`Emmissions category`,`Consumption`)
+            VALUES(?, ?, ?, ?, ?, ?);""",
+                (
+                    car.engine.capacity,
+                    car.engine.power_hp,
+                    car.engine.power_kw,
+                    car.engine.fuel_type,
+                    car.engine.emissions_category,
+                    car.engine.consumption,
+                ),
             )
-            if brand not in all_cars_dict.keys(): 
-                all_cars_dict[brand] = {}
-            if model not in all_cars_dict[brand]:
-                all_cars_dict[brand][model] = {}
-            if fuel_type not in all_cars_dict[brand][model]:
-                all_cars_dict[brand][model][fuel_type] = {}
-            if year not in all_cars_dict[brand][model][fuel_type]:
-                all_cars_dict[brand][model][fuel_type][year] = {}
-            if power not in all_cars_dict[brand][model][fuel_type][year]:
-                all_cars_dict[brand][model][fuel_type][year][power] = {}
-            if avg_consumption not in all_cars_dict[brand][model][fuel_type][year][power]:
-                all_cars_dict[brand][model][fuel_type][year][power] = avg_consumption
-            
-            with open(cwd+"/fuel_consumption.txt", "wb") as file:
-                pickle.dump(all_cars_dict, file)    
-    else:
-        avg_consumption = '0'
-    return price_convertor(avg_consumption) 
+        if not car.engine.id:
+            raise FuelConsumptionError("Fuel consumption not found!")
+
+        _ = insert_query(
+            "CALL `Car Expenses`.`update_cars_engines`(?, ?);", (car.id, car.engine.id)
+        )
+
+    return price_convertor(avg_consumption)
