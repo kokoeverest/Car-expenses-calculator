@@ -10,6 +10,6 @@ class FuelPricesPageTest(unittest.TestCase):
         prices, query = scrape_fuel_prices()
         # Assert
         self.assertIsInstance(prices, dict)
-        self.assertIsInstance(query, str)        
+        self.assertIsInstance(query, list)        
         self.assertEqual(len(prices), 7)
-        self.assertGreater(len(query), 10)
+        self.assertEqual(len(query), 7)

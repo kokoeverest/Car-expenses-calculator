@@ -28,16 +28,17 @@ def try_click(driver: WebDriver, button: str):
             pass
 
 
+# not debugged!
 def get_insurance_price(car: Car, registration, driver_age, driver_experience="5"):
     if car and car.engine and car.tax:
         car_data = (
             car.year,
             car.engine.capacity,
-            fuel[car.engine.fuel_type],
+            car.engine.fuel_type,
             car.engine.power_hp,
             get_prefix(car.tax.city),
             registration,
-            driver_age,
+            driver_age if driver_age is not None else "NULL",
             driver_experience,
         )
         data = next(
@@ -63,7 +64,7 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
             try:
                 engine_size = engine_size_convertor(car.engine.capacity)
                 power = insurance_power_convertor(car.engine.power_hp)
-
+                municipality = car_data[4]
                 # first page selectors
                 Select(driver.find_element(By.ID, "typeSelect")).select_by_value("1")
                 Select(driver.find_element(By.ID, "dvigatelSelect")).select_by_value(
@@ -76,14 +77,14 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
                 Select(driver.find_element(By.ID, "seatNumberSelect")).select_by_value(
                     str(car.seats)
                 )
-                Select(driver.find_element(By.ID, "firstRegistrationYear")).select_by_value(
-                    car.year
-                )
+                Select(
+                    driver.find_element(By.ID, "firstRegistrationYear")
+                ).select_by_value(car.year)
                 Select(driver.find_element(By.ID, "usefor")).select_by_value("1")
                 if not registration:
                     driver.find_element(By.ID, "noRegistration").send_keys("0")
                 Select(driver.find_element(By.ID, "reg_no")).select_by_value(
-                    car.tax.municipality
+                    municipality
                 )
 
                 wait_for_a_second(1)
@@ -115,12 +116,13 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
                 _ = insert_query(
                     f"""CALL `Car Expenses`.`add_insurance`(
                         '{car.year}', '{car.engine.capacity}', '{car.engine.fuel_type}', 
-                        '{car.engine.power_hp}', '{car.tax.municipality}', '{registration}', 
-                        '{driver_age}', '{driver_experience}', {insurance.min_price}, 
-                        {insurance.max_price}, '{date.today()}');"""
+                        '{car.engine.power_hp}', '{municipality}', {registration}, 
+                        {driver_age if driver_age is not None else "NULL"}, '{driver_experience}', 
+                        {insurance.min_price}, {insurance.max_price}, '{date.today()}');"""
                 )
 
-            except Exception:
+            except Exception as e:
+                print(str(e))
                 insurance.min_price, insurance.max_price = 0, 0
 
     return insurance

@@ -146,6 +146,8 @@ def price_convertor(product: str):
 def engine_size_convertor(size: str) -> str:
     if int(size) <= 800:
         return "800"
+    elif 800 < int(size) <= 2600:
+        return size
     elif 2600 < int(size) <= 3000:
         return "3000"
     elif 3000 < int(size) <= 3200:

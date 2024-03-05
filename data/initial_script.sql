@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `Car Expenses`.`Insurances` (
   `Car year` VARCHAR(45) NOT NULL,
   `Engine size` VARCHAR(45) NOT NULL,
   `Fuel type` VARCHAR(45) NOT NULL,
-  `Engine power` FLOAT NOT NULL,
+  `Engine power` VARCHAR(45) NOT NULL ,
   `Municipality` VARCHAR(45) NOT NULL,
   `Registration` TINYINT NULL DEFAULT 0,
   `Driver age` VARCHAR(45) NULL DEFAULT NULL ,

@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel
 
@@ -14,6 +15,7 @@ INSURANCE_FUEL_VALUES = {
 
 
 class Insurance(BaseModel):
+    id: int | None = None
     year: str
     engine_size: str
     fuel_type: str
@@ -24,10 +26,12 @@ class Insurance(BaseModel):
     driving_experience: str = "5"
     min_price: float = 0
     max_price: float = 0
+    date: datetime | None = None
 
     @classmethod
     def from_query(
         cls,
+        id,
         year,
         engine_size,
         fuel_type,
@@ -38,8 +42,10 @@ class Insurance(BaseModel):
         driving_experience,
         min_price,
         max_price,
+        date,
     ):
         return cls(
+            id=id,
             year=year,
             engine_size=engine_size,
             fuel_type=fuel_type,
@@ -50,6 +56,7 @@ class Insurance(BaseModel):
             driving_experience=driving_experience,
             min_price=min_price,
             max_price=max_price,
+            date=date,
         )
 
     @classmethod

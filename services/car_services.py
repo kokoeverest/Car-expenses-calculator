@@ -23,37 +23,37 @@ from data.db_connect import read_query
 
 
 def build_car(
-    c_brand: str,
-    c_model: str,
-    c_year: str,
-    c_power_hp: str,
-    c_power_kw: str,
-    f_type: str,
+    car_brand: str,
+    car_model: str,
+    car_year: str,
+    car_power_hp: str,
+    car_power_kw: str,
+    type_fuel: str,
     engine_capacity: str,
     city: str,
-    c_price: str | None = None,
-    reg: bool = False,
+    car_price: str | None = None,
+    reg: int = 0,
     driver_age: str | None = None,
     driver_experience: str = '5',
 ):
     engine_capacity = validate_engine_capacity(engine_capacity)
-    c_power_hp = kw_to_hp_convertor(c_power_kw) if not c_power_hp else c_power_hp
-    c_power_kw = hp_to_kw_converter(c_power_hp) if not c_power_kw else c_power_kw
-    
+    car_power_hp = kw_to_hp_convertor(car_power_kw) if not car_power_hp else car_power_hp
+    car_power_kw = hp_to_kw_converter(car_power_hp) if not car_power_kw else car_power_kw
+
     start = datetime.now()
     car: Car | None = get_car(
-        c_brand, c_model, c_year, engine_capacity, c_power_hp, f_type
+        car_brand, car_model, car_year, engine_capacity, car_power_hp, type_fuel
     )
     if not car:
         raise WrongCarData()
 
     if not car.engine:  # create a new engine record and update the database
         car.engine = Engine(
-            power_hp=c_power_hp,  # user input
-            power_kw=c_power_kw,  # user input
+            power_hp=car_power_hp,  # user input
+            power_kw=car_power_kw,  # user input
             capacity=engine_capacity,  # user input
-            emissions_category=get_euro_category_from_car_year(c_year),  # or user input
-            fuel_type=f_type,  # user input
+            emissions_category=get_euro_category_from_car_year(car_year),
+            fuel_type=type_fuel,  # user input
             consumption=None,
             oil_capacity=None,
         )
@@ -80,7 +80,7 @@ def build_car(
     insurance = get_insurance_price(car, reg, driver_age, driver_experience)
     fuel_per_liter = get_fuel_price(car.engine.fuel_type)
     
-    car.price = c_price
+    car.price = car_price
 
     end = datetime.now()
     diff = end - start
