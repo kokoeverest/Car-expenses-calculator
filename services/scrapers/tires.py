@@ -139,7 +139,7 @@ def get_tires_prices(car: Car):
 def scrape_possible_tires(brand, model, year):
     """Start the webdriver and search for the possible tire sizes for that car model"""
 
-    with start_driver(headless=True) as driver:
+    with start_driver() as driver:
         Select(driver.find_element(By.ID, "makers")).select_by_value(brand)
         wait_for_a_second()
         Select(driver.find_element(By.ID, "models")).select_by_value(model)

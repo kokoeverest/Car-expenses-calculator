@@ -13,14 +13,14 @@ car_router = APIRouter()
 
 @car_router.get("/api/", tags=["Car price API"], responses=car_responses)
 def get_car_prices(
-    brand: str,
-    model: str,
-    year: str,
-    fuel_type: str,
-    engine_capacity: str,
-    city: str,
+    brand: str = "Volvo",
+    model: str = "XC60",
+    year: str = "2010",
+    fuel_type: str = "diesel",
+    engine_capacity: str = "2.4",
+    city: str = "София",
     power_hp: str = "",
-    power_kw: str = "",
+    power_kw: str = "120",
     car_price: str | None = None,
 ):
     try:

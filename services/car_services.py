@@ -6,7 +6,7 @@ from models.tire import Tire
 from services.scrapers.conversions import (
     get_euro_category_from_car_year,
     done,
-    kw_to_hp_convertor,
+    kw_to_hp_converter,
     hp_to_kw_converter,
     validate_engine_capacity,
 )
@@ -36,8 +36,9 @@ def build_car(
     driver_age: str | None = None,
     driver_experience: str = '5',
 ):
-    engine_capacity = validate_engine_capacity(engine_capacity)
-    car_power_hp = kw_to_hp_convertor(car_power_kw) if not car_power_hp else car_power_hp
+    if not engine_capacity == "eev":
+        engine_capacity = validate_engine_capacity(engine_capacity)
+    car_power_hp = kw_to_hp_converter(car_power_kw) if not car_power_hp else car_power_hp
     car_power_kw = hp_to_kw_converter(car_power_hp) if not car_power_kw else car_power_kw
 
     start = datetime.now()
@@ -78,8 +79,11 @@ def build_car(
     car.vignette = get_vignette_price()
 
     insurance = get_insurance_price(car, reg, driver_age, driver_experience)
-    fuel_per_liter = get_fuel_price(car.engine.fuel_type)
-    
+    if car.engine.fuel_type != "eev":
+        fuel_per_liter = get_fuel_price(car.engine.fuel_type)
+    else:
+        fuel_per_liter = 0
+        
     car.price = car_price
 
     end = datetime.now()

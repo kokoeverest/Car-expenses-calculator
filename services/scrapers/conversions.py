@@ -3,6 +3,30 @@ import time
 from fuzzywuzzy import fuzz
 
 
+def wait_for_a_second(seconds=2):
+    """Wait a second, don't put too much pressure on the server :-)"""
+    return time.sleep(seconds)
+
+def find_correct_name(search: str, options: set) -> str:
+    versions = word_versions(search)
+    try:
+        result = next(iter(options.intersection(versions)), "")
+        if not result:
+            raise
+    except Exception:
+        result = next(
+            iter(
+                [
+                    word
+                    for word in options
+                    for option in versions
+                    if option in word and fuzz.ratio(option, word) > 90
+                ]
+            ),
+            "",
+        )
+    return result
+
 def word_versions(word: str):
     copy_of_word = word
     if not word.isalpha() and not word.isdigit() and not word[0].isdigit():
@@ -31,40 +55,14 @@ def word_versions(word: str):
         word.replace(" ", ".").capitalize(),
         word.replace("-", ".").capitalize(),
         "".join(w for w in word.split()),
+        " ".join(w.capitalize() for w in word.split("-")),
         " ".join(w.capitalize() for w in word.split()),
         "-".join(w.capitalize() for w in word.split()),
         ".".join(w.capitalize() for w in word.split()),
         "".join(w.capitalize() for w in word.split()),
     }
 
-
-def find_correct_name(search: str, options: set) -> str:
-    versions = word_versions(search)
-    try:
-        result = next(iter(options.intersection(versions)), "")
-        if not result:
-            raise
-    except Exception:
-        result = next(
-            iter(
-                [
-                    word
-                    for word in options
-                    for option in versions
-                    if option in word and fuzz.ratio(option, word) > 90
-                ]
-            ),
-            "",
-        )
-    return result
-
-
-def wait_for_a_second(seconds=2):
-    """Wait a second, don't put too much pressure on the server :-)"""
-    return time.sleep(seconds)
-
-
-def age_convertor(age) -> str:
+def age_converter(age) -> str:
     if len(age) == 4:
         age = calculate_age(age)
     else:
@@ -117,7 +115,7 @@ def calculate_euro_category(string: str):
 
 
 def hp_to_kw_converter(hp: str):
-    return str(int(hp) * 0.746)
+    return str(round(int(hp) * 0.746))
 
 def validate_engine_capacity(string: str):
     if string.isdigit() and len(string) > 2:
@@ -128,22 +126,22 @@ def validate_engine_capacity(string: str):
     return validate_engine_capacity(string)
 
 
-def kw_to_hp_convertor(kw: str):
-    return str(int(kw) * 1.34102209)
+def kw_to_hp_converter(kw: str):
+    return str(round(int(kw) * 1.34102209))
 
 
-def convert_car_string(string: str):
+def car_string_converter(string: str):
     return string.replace(" ", "-").lower()
 
 
-def price_convertor(product: str):
+def price_converter(product: str):
     try:
         return float(product.replace(",", "."))
     except Exception:
         return float(0)
 
 
-def engine_size_convertor(size: str) -> str:
+def engine_size_converter(size: str) -> str:
     if int(size) <= 800:
         return "800"
     elif 800 < int(size) <= 2600:
@@ -158,7 +156,7 @@ def engine_size_convertor(size: str) -> str:
         return "3501"
 
 
-def insurance_power_convertor(power: str) -> str:
+def insurance_power_converter(power: str) -> str:
     if int(power) <= 90:
         return "66"
     elif 90 < int(power) <= 101:
@@ -179,3 +177,18 @@ def insurance_power_convertor(power: str) -> str:
 
 def done(string="Done"):
     print(string + "\n" + "-" * 33)
+
+
+def fuel_string_converter(string: str):
+    fuels = {
+        "eev": "Electricity", 
+        "cng": "CNG",
+        "lpg": "LPG",
+        "hybrid gasoline": "Plug-in hybrid gasoline",
+        "hybrid diesel": "Plug-in hybrid diesel",
+    }
+
+    try:
+        return fuels[string.lower()]
+    except KeyError:
+        return string.capitalize()

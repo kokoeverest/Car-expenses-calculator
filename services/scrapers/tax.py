@@ -7,7 +7,7 @@ import sys
 
 sys.path.append(".")
 from services.scrapers.conversions import (
-    age_convertor,
+    age_converter,
     calculate_euro_category,
 )
 
@@ -22,7 +22,7 @@ def start_driver():
 def generate_car_data_dict(
     city: str, municipality: str, age: str, euro: str, power: str
 ):
-    lst = [city, municipality, age_convertor(age), calculate_euro_category(euro), power]
+    lst = [city, municipality, age_converter(age), calculate_euro_category(euro), power]
     data = ["obl", "obs", "old", "euro", "kw"]
 
     return dict(el for el in zip(data, lst))

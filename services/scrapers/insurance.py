@@ -8,9 +8,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from services.scrapers.conversions import (
     wait_for_a_second,
-    price_convertor,
-    engine_size_convertor,
-    insurance_power_convertor,
+    price_converter,
+    engine_size_converter,
+    insurance_power_converter,
 )
 import sys
 
@@ -62,8 +62,8 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
             except Exception:
                 pass
             try:
-                engine_size = engine_size_convertor(car.engine.capacity)
-                power = insurance_power_convertor(car.engine.power_hp)
+                engine_size = engine_size_converter(car.engine.capacity)
+                power = insurance_power_converter(car.engine.power_hp)
                 municipality = car_data[4]
                 # first page selectors
                 Select(driver.find_element(By.ID, "typeSelect")).select_by_value("1")
@@ -106,7 +106,7 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
                 wait_for_a_second()
 
                 temp_prices = [
-                    price_convertor(el.text.split("\n")[1])
+                    price_converter(el.text.split("\n")[1])
                     for el in driver.find_elements(By.CLASS_NAME, "oi-compare-row")
                 ]
                 insurance.min_price, insurance.max_price = (

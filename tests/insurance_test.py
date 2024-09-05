@@ -1,3 +1,4 @@
+from typing import Any
 import unittest
 from selenium import webdriver
 from selenium.webdriver.support.select import Select
@@ -7,12 +8,12 @@ from models.insurance import INSURANCE_FUEL_VALUES as fuel
 from services.scrapers.insurance import try_click
 from services.scrapers.conversions import (
     wait_for_a_second,
-    price_convertor,
-    engine_size_convertor,
-    insurance_power_convertor,
+    price_converter,
+    engine_size_converter,
+    insurance_power_converter,
 )
 
-test_insurance_data = {
+test_insurance_data: dict[str, Any] = {
     "year": "2015",
     "engine_size": "2200",
     "fuel_type": fuel["gasoline"],
@@ -58,8 +59,8 @@ class InsurancePageTest(unittest.TestCase):
     def test_pageSelectorsFilledCorrectly_returnsListOfPrices(self):
         """Submission form is divided into two pages and this test performs the actions on the first page"""
         # Arrange
-        engine_size = engine_size_convertor(test_insurance_data["engine_size"])
-        power = insurance_power_convertor(test_insurance_data["power"])
+        engine_size = engine_size_converter(test_insurance_data["engine_size"])
+        power = insurance_power_converter(test_insurance_data["power"])
         # Act
         Select(self.driver.find_element(By.ID, "typeSelect")).select_by_value("1")
         Select(self.driver.find_element(By.ID, "dvigatelSelect")).select_by_value(
@@ -89,7 +90,7 @@ class InsurancePageTest(unittest.TestCase):
         wait_for_a_second()
 
         temp_prices = [
-            price_convertor(el.text.split("\n")[1])
+            price_converter(el.text.split("\n")[1])
             for el in self.driver.find_elements(By.CLASS_NAME, "oi-compare-row")
         ]
         # Assert

@@ -6,8 +6,9 @@ from models.car import Car
 from common.exceptions import FuelConsumptionError
 from services.scrapers.conversions import (
     wait_for_a_second,
-    price_convertor,
+    price_converter,
     find_correct_name,
+    fuel_string_converter,
 )
 import sys
 
@@ -39,7 +40,7 @@ def find_fuel_consumption(
                     model
                 )
             Select(driver.find_element(By.ID, "fueltype")).select_by_visible_text(
-                fuel_type.capitalize()
+                fuel_string_converter(fuel_type)
             )
             driver.find_element(By.ID, "constyear_s").send_keys(year)
             driver.find_element(By.ID, "constyear_e").send_keys(year)
@@ -88,7 +89,7 @@ def get_fuel_consumption(car: Car):
         )
         if avg_consumption != "0":
             # insert into the database, don't forget to update the cars_engines table!
-            car.engine.consumption = price_convertor(avg_consumption)
+            car.engine.consumption = price_converter(avg_consumption)
             car.engine.id = insert_query(
                 """INSERT INTO `Car Expenses`.`Engines`
             (`Capacity`,`Power_hp`,`Power_kw`,`Fuel type`,`Emmissions category`,`Consumption`)
@@ -109,4 +110,4 @@ def get_fuel_consumption(car: Car):
             "CALL `Car Expenses`.`update_cars_engines`(?, ?);", (car.id, car.engine.id)
         )
 
-    return price_convertor(avg_consumption)
+    return price_converter(avg_consumption)
