@@ -7,7 +7,8 @@ def wait_for_a_second(seconds=2):
     """Wait a second, don't put too much pressure on the server :-)"""
     return time.sleep(seconds)
 
-def find_correct_name(search: str, options: set) -> str:
+
+def find_correct_name(search: str, options: set[str]) -> str:
     versions = word_versions(search)
     try:
         result = next(iter(options.intersection(versions)), "")
@@ -26,6 +27,7 @@ def find_correct_name(search: str, options: set) -> str:
             "",
         )
     return result
+
 
 def word_versions(word: str):
     copy_of_word = word
@@ -62,8 +64,9 @@ def word_versions(word: str):
         "".join(w.capitalize() for w in word.split()),
     }
 
-def age_converter(age) -> str:
-    if len(age) == 4:
+
+def age_converter(age: str | int) -> str:
+    if isinstance(age, str) and len(age) == 4:
         age = calculate_age(age)
     else:
         age = int(age)
@@ -81,7 +84,7 @@ def age_converter(age) -> str:
     return str(result)
 
 
-def calculate_age(year) -> int:
+def calculate_age(year: str) -> int:
     current_year = datetime.now().year
     return current_year - int(year)
 
@@ -117,12 +120,19 @@ def calculate_euro_category(string: str):
 def hp_to_kw_converter(hp: str):
     return str(round(int(hp) * 0.746))
 
+
 def validate_engine_capacity(string: str):
     if string.isdigit() and len(string) > 2:
         return string
+    
     string = string.replace(",", "") if "," in string else string.replace(".", "")
+
     if len(string) == 2:
         string = str(int(string) * 100)
+
+    if len(string) == 3:
+        string += "0"
+
     return validate_engine_capacity(string)
 
 
@@ -134,9 +144,9 @@ def car_string_converter(string: str):
     return string.replace(" ", "-").lower()
 
 
-def price_converter(product: str):
+def price_converter(price: str):
     try:
-        return float(product.replace(",", "."))
+        return float(price.replace(",", "."))
     except Exception:
         return float(0)
 
@@ -181,7 +191,7 @@ def done(string="Done"):
 
 def fuel_string_converter(string: str):
     fuels = {
-        "eev": "Electricity", 
+        "eev": "Electricity",
         "cng": "CNG",
         "lpg": "LPG",
         "hybrid gasoline": "Plug-in hybrid gasoline",

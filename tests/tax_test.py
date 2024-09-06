@@ -38,7 +38,7 @@ class TaxPageTest(unittest.TestCase):
     def test_submitButtonClick_worksWithCorrectValue(self):
         '''When car power data is entered in the field the form can be submitted'''
         car_power_data = {
-            'kw': 136 # # should be "kw": car.engine.power_hp (if the power is not in kw - use the convertor)
+            'kw': 136 
         }
         # Arrange & Act
         for k, v in car_power_data.items():
