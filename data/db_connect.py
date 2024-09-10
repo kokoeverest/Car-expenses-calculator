@@ -1,12 +1,12 @@
 from mariadb import connect
 from mariadb.connections import Connection
-import os
+from data.api_keys import DB_PASSWORD
 
 
 def _get_connection() -> Connection:
     return connect(
         user="kaloyan",
-        password=os.environ.get("mariadb_root_pwd"),
+        password=DB_PASSWORD,
         host="localhost",
         port=3306,
         database="Car Expenses",

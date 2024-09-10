@@ -1,5 +1,5 @@
 import unittest
-from services.scrapers.fuel_prices_today import scrape_fuel_prices
+from services.scrapers.fuel_prices_today import scrape_fuel_prices, FUELO_URL
 
 
 class FuelPricesPageTest(unittest.TestCase):
@@ -7,9 +7,10 @@ class FuelPricesPageTest(unittest.TestCase):
 
     def test_getFuelPrices_returnDictWithPrices(self):
         # Arrange & Act
-        prices, query = scrape_fuel_prices()
+        prices, query = scrape_fuel_prices(FUELO_URL)
+        
         # Assert
         self.assertIsInstance(prices, dict)
         self.assertIsInstance(query, list)        
-        self.assertEqual(len(prices), 7)
-        self.assertEqual(len(query), 7)
+        self.assertEqual(len(prices), 4)
+        self.assertEqual(len(query), 4)

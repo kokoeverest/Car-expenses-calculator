@@ -1,7 +1,7 @@
 import requests
-from bs4 import BeautifulSoup as bs
 from data.db_connect import read_query, multiple_insert_queries
 from datetime import date
+from data.api_keys import FUELO_API_KEY
 import sys
 
 sys.path.append(".")
@@ -10,35 +10,27 @@ FUELS_DICT = {
     "Бензин A95": "gasoline",
     "Дизел": "diesel",
     "Пропан Бутан": "lpg",
-    "Метан": "cng",
-    "Дизел премиум": "premium",
-    "Бензин A98": "gasoline A98",
-    "Бензин A100": "gasoline A100",
+    "Метан": "methane",
+    # "Метан": "cng",
+    # "Дизел премиум": "dieselplus",
+    # "Бензин A98": "gasoline98",
+    # "Бензин A100": "gasoline98plus",
 }
 
+FUELO_URL = f"http://fuelo.net/api/price?key={FUELO_API_KEY}&fuel="
 
-def scrape_fuel_prices(url="https://m.fuelo.net/m/prices"):
-    result = requests.get(url)
-    soup = bs(result.text, features="lxml").find_all("h4")
-    today = date.today()
+
+def scrape_fuel_prices(url=FUELO_URL):
     prices = {}
     query = []
-    for el in soup:
-        raw: list[str] = el.text.split(" ")
 
-        if len(raw) == 3:
-            fuel_type, temp_price = " ".join((raw[0], raw[1])), raw[2]
-        elif len(raw) == 2:
-            fuel_type, temp_price = raw
-        else:
-            continue
+    for fuel in FUELS_DICT.values():
+        temp_result: dict[str, str | int] = requests.get(f"{url}{fuel}").json()
 
-        if "цени от" not in temp_price:
-            fuel_type = FUELS_DICT.get(fuel_type)
-            temp_price = float(temp_price.replace(",", ".").rstrip("лв."))
-            prices[fuel_type] = temp_price
+        if temp_result.get("status") == "OK":
+            prices[fuel] = temp_result.get("price")
             query.append(
-                f"CALL `Car Expenses`.`update_fuel_price`('{fuel_type}', {temp_price}, '{today}');"
+                f"CALL `Car Expenses`.`update_fuel_price`('{fuel}', {prices[fuel]}, '{temp_result['date']}');"
             )
 
     return prices, query
@@ -54,5 +46,10 @@ def get_fuel_price(f_type) -> float:
 
     prices, query = scrape_fuel_prices()
 
-    _ = multiple_insert_queries(query)  # update the fuel prices for today
-    return prices[f_type]
+    if prices:
+        _ = multiple_insert_queries(query)  # update the fuel prices for today
+        return prices[f_type]
+    else:
+        last_known_prices = "CALL `Car Expenses`.`get_last_known_fuel_prices`();"
+        prices = {el[0]: el[1] for el in read_query(last_known_prices)}
+        return prices[f_type]
