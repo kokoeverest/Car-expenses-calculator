@@ -161,4 +161,4 @@ cython_debug/
 .vscode/settings.json
 test.py
 /Backup
-*.txt
+# *.txt
