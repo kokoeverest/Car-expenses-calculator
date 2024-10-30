@@ -34,12 +34,16 @@ def build_car(
     car_price: str | None = None,
     reg: int = 0,
     driver_age: str | None = None,
-    driver_experience: str = '5',
+    driver_experience: str = "5",
 ):
     if not engine_capacity == "eev":
         engine_capacity = validate_engine_capacity(engine_capacity)
-    car_power_hp = kw_to_hp_converter(car_power_kw) if not car_power_hp else car_power_hp
-    car_power_kw = hp_to_kw_converter(car_power_hp) if not car_power_kw else car_power_kw
+    car_power_hp = (
+        kw_to_hp_converter(car_power_kw) if not car_power_hp else car_power_hp
+    )
+    car_power_kw = (
+        hp_to_kw_converter(car_power_hp) if not car_power_kw else car_power_kw
+    )
 
     start = datetime.now()
     car: Car | None = get_car(
@@ -69,6 +73,7 @@ def build_car(
         # return the prices of the most common tire sizes instead of *No info*
         done(str(e))
         car.tires = []
+        
     car.tax = Tax(
         city=city,  # user input
         municipality=city,
@@ -83,7 +88,7 @@ def build_car(
         fuel_per_liter = get_fuel_price(car.engine.fuel_type)
     else:
         fuel_per_liter = 0
-        
+
     car.price = car_price
 
     end = datetime.now()
@@ -143,11 +148,23 @@ def calculate_prices(car: Car, fuel_price, insurance: Insurance):
     tires_max_price, tires_min_price = car.calculate_tires_price()
 
     total_min_price = sum(
-        (tax_price, fuel_per_10000_km, tires_min_price, insurance.min_price, car.vignette),
+        (
+            tax_price,
+            fuel_per_10000_km,
+            tires_min_price,
+            insurance.min_price,
+            car.vignette,
+        ),
         start=0,
     )
     total_max_price = sum(
-        (tax_price, fuel_per_30000_km, tires_max_price, insurance.max_price, car.vignette),
+        (
+            tax_price,
+            fuel_per_30000_km,
+            tires_max_price,
+            insurance.max_price,
+            car.vignette,
+        ),
         start=0,
     )
     car_dict = car.to_dict()
@@ -185,5 +202,3 @@ def calculate_prices(car: Car, fuel_price, insurance: Insurance):
     print(json.dumps(result_min, indent=2, ensure_ascii=False, separators=("", " - ")))
     print(json.dumps(result_max, indent=2, ensure_ascii=False, separators=("", " - ")))
     return final_result
-
-

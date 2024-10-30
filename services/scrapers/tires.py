@@ -1,10 +1,11 @@
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from datetime import date
 import re
 import sys
 from models.car import Car
+from common.helpers import start_driver
+from common.WEBSITES import TIRES_WEBSITE
 
 sys.path.append(".")
 from models.tire import Tire
@@ -18,7 +19,6 @@ from data.db_connect import (
 """This scraper should accept the car object and add the tires sizes and prices to the calculations"""
 
 FIND_TIRE_SIZE_PATTERN = r"\d{3}/\d{2}R\d{2}|\d{3}/\d{2}ZR\d{2}"
-TIRES_WEBSITE = "https://www.bggumi.com/"
 
 
 def find_tire_sizes(driver):
@@ -41,7 +41,9 @@ def collect_tires_prices(tire_sizes: set | list, driver) -> list[Tire] | list:
     tires = []
     for size in tire_sizes:
         w, h, i = size[:3], size[4:6], size[-2:]
-        prefix = "ZR" if size[-2:-4] == "ZR" else "R"
+
+        prefix = "ZR" if size[6:8] == "ZR" else "R"
+        print(f"Collecting prices for {w}/{h}/{i} with prefix {prefix} ({size})")
         link_url = f"eshop/search?type=1&width={w}&height={h}&inch={i}"
 
         wait_for_a_second()
@@ -70,59 +72,47 @@ def add_product_price(driver):
     try:
         matches = re.findall(r"^\d+,\d+|^\d+\.\d+|^\d+", product)
         if len(matches) > 0:
-            product = matches[0]
-            return float(product)
-    except Exception:
-        try:
+            product: str = matches[0]
+
             # if the price of one tire is ridiculously high, above 1000 leva, it will be separated by a comma
             product = product.replace(",", "")
             return float(product)
-        except Exception:
-            return
-
-
-def start_driver(headless=False):
-    """Start an instance of Chrome webdriver with the headless option off by default"""
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    driver = webdriver.Chrome(options) if headless else webdriver.Chrome()
-    driver.get(TIRES_WEBSITE)
-
-    return driver
+    except Exception:
+        return
 
 
 def get_tires_prices(car: Car):
     """The main logic of this scraper -> look for the tires sizes and prices in the database and if some
     of the info is missing, scrape it from the website and update the database"""
-    # empty_list = "[]"
-    # possible_sizes = []
+    possible_sizes = re.findall(FIND_TIRE_SIZE_PATTERN, car.tires)  # type: ignore
+    print("Before scraping: ", possible_sizes)
 
-    possible_sizes = re.findall(FIND_TIRE_SIZE_PATTERN, car.tires) # type: ignore
-    # if not car.tires == empty_list:  # could it be other type?
-
-    if not possible_sizes:
+    # if there are no posiible tires sizes recorded in the db, try to scrape them
+    if possible_sizes == []:
         possible_sizes = scrape_possible_tires(car.brand, car.model, car.year)
-        if not possible_sizes:
+        if possible_sizes == []:
             return possible_sizes
         update_query(
             f"""
             CALL `Car Expenses`.`update_car_tires`('{car.brand}', '{car.model}', {car.year}, "{possible_sizes}");"""
         )
+
     # then look for the price of each tire and see if there are missing records in the database
     existing_tires = return_list_with_tire_objects(possible_sizes)
+    print("Existing tires: ", existing_tires)
     missing_sizes = set(possible_sizes).difference(
         set(str(tire) for tire in existing_tires)
     )
-
-    if not missing_sizes:
+    print("Missing sizes: ", missing_sizes)
+    if len(missing_sizes) == 0:
         return existing_tires
 
-    # if there are missing tires in the file - scrape them and update the info for each tire
+    # if there are missing tires in the ddatabase - scrape them and update the info for each tire
     today = date.today()
     collected_tires = []
     missing_query = []
 
-    with start_driver(headless=True) as driver:
+    with start_driver(TIRES_WEBSITE) as driver:
         collected_tires = collect_tires_prices(missing_sizes, driver)
 
     for tire in collected_tires:
@@ -139,7 +129,9 @@ def get_tires_prices(car: Car):
 def scrape_possible_tires(brand, model, year):
     """Start the webdriver and search for the possible tire sizes for that car model"""
 
-    with start_driver() as driver:
+    print(f"Scraping tires prices for {brand} {model} {year}")
+
+    with start_driver(TIRES_WEBSITE) as driver:
         Select(driver.find_element(By.ID, "makers")).select_by_value(brand)
         wait_for_a_second()
         Select(driver.find_element(By.ID, "models")).select_by_value(model)

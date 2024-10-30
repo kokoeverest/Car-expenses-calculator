@@ -1,34 +1,24 @@
 from bs4 import BeautifulSoup as bs
-from selenium import webdriver
-from selenium.webdriver.common.by import By
+from common.WEBSITES import VIGNETTE_WEBSITE
+# from common.helpers import start_driver
 import requests
 import re
 import sys
-sys.path.append('.')
 
-def start_driver(url):
-    '''Only needed if the request.get(url) fails for some reason (cookies window for example)'''
+sys.path.append(".")
 
-    driver = webdriver.Chrome()
-    driver.get(url)
-    # deal with the cookies pop up window
+
+
+def get_vignette_price(url=VIGNETTE_WEBSITE):
+    """start_driver needed if the request.get(url) fails for some reason (cookies window for example)?"""
     try:
-        buttons = driver.find_elements(By.TAG_NAME, "button")
-        for button in buttons:
-            if button.text == "Разбрах":
-                button.click()
-                break
-        else:
-            raise Exception("Consent button was not found")
-    except Exception as e:
-        print(str(e))
-        pass
-    return driver 
-
-def get_vignette_price(url='https://vinetki.bg/prices'):
-    response = requests.get(url)
-    soup = bs(response.text, features="lxml")
-    soup = soup.find_all('td', string=re.compile('ГОДИШНА'))
-    price = list(soup[0].next_elements)[4].rstrip(' лв.').replace(',', '.')
-    
+        response = requests.get(url)
+        soup = bs(response.text, features="lxml")
+        soup = soup.find_all("td", string=re.compile("ГОДИШНА"))
+        price = list(soup[0].next_elements)[4].rstrip(" лв.").replace(",", ".")
+    except Exception:
+        # uncomment and implement if needed
+        # with start_driver(VIGNETTE_WEBSITE) as driver:
+        #     raise NotImplementedError("Vignette service not implemented")
+        price = 0
     return float(price)

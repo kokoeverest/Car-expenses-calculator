@@ -1,5 +1,6 @@
 from data.db_connect import insert_query
-from selenium import webdriver
+from common.helpers import start_driver
+from common.WEBSITES import FUEL_CONSUMPTION_WEBSITE
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from models.car import Car
@@ -19,7 +20,7 @@ def find_fuel_consumption(
     brand: str, model: str, year: str, fuel_type: str, power: str, avg_consumption="0"
 ):
     # wait_for_a_second(1)
-    with start_driver() as driver:
+    with start_driver(FUEL_CONSUMPTION_WEBSITE) as driver:
         brand = find_correct_name(
             brand,
             {opt.text for opt in Select(driver.find_element(By.ID, "manuf")).options},
@@ -55,29 +56,10 @@ def find_fuel_consumption(
     return avg_consumption
 
 
-def start_driver():
-    driver = webdriver.Chrome()
-    url = "https://www.spritmonitor.de/en/search.html"
-    wait_for_a_second(1)
-    driver.get(url)
-
-    # deal with the cookies pop up window
-    try:
-        buttons = driver.find_elements(By.TAG_NAME, "button")
-        for button in buttons:
-            if button.text == "Einwilligen" or button.text == "Consent":
-                button.click()
-                break
-        else:
-            raise Exception("Consent button was not found")
-    except Exception as e:
-        print(str(e))
-        pass
-
-    return driver
-
-
 def get_fuel_consumption(car: Car):
+    """
+    Get the current car's fuel consumption.
+    """
     # if such record does not exist, start the driver and scrape it from the website
     if car.engine is not None:
         avg_consumption = find_fuel_consumption(

@@ -1,8 +1,9 @@
 from models.car import Car
 from models.insurance import Insurance, INSURANCE_FUEL_VALUES as fuel
 from data.db_connect import read_query, insert_query
+from common.helpers import start_driver
+from common.WEBSITES import INSURANCE_WEBSITE
 from datetime import date
-from selenium import webdriver
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
@@ -53,9 +54,10 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
         if data:
             insurance = Insurance.from_query(*data)
             return insurance
-        insurance = Insurance.from_list(*car_data)
+        
         # scrape the prices from the website
-        with start_driver() as driver:
+        insurance = Insurance.from_list(*car_data)
+        with start_driver(INSURANCE_WEBSITE) as driver:
             wait_for_a_second(1)
             try:
                 driver.find_element(By.ID, "thinkconsent-button-accept-all").click()
@@ -126,14 +128,6 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
                 insurance.min_price, insurance.max_price = 0, 0
 
     return insurance
-
-
-def start_driver():
-    driver = webdriver.Chrome()
-    # the url of the insurance company
-    url = "https://www.sdi.bg/onlineinsurance/showQuestionnaire.php"
-    driver.get(url)
-    return driver
 
 
 def get_prefix(city_name: str):

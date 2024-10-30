@@ -1,4 +1,5 @@
-from selenium import webdriver
+from common.helpers import start_driver
+from common.WEBSITES import TAXES_WEBSITE
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from data.db_connect import read_query, insert_query
@@ -10,13 +11,6 @@ from services.scrapers.conversions import (
     age_converter,
     calculate_euro_category,
 )
-
-
-def start_driver():
-    driver = webdriver.Chrome()
-    url = "https://cartax.uslugi.io/"
-    driver.get(url)
-    return driver
 
 
 def generate_car_data_dict(
@@ -44,7 +38,7 @@ def get_tax_price(car_data: list):
         return float(tax_price[0])
 
     car_data_dict = generate_car_data_dict(*car_data)
-    with start_driver() as driver:
+    with start_driver(TAXES_WEBSITE) as driver:
         for k, v in car_data_dict.items():
             try:
                 el = Select(
