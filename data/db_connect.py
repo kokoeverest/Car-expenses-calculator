@@ -5,7 +5,7 @@ from data.api_keys import DB_PASSWORD
 
 def _get_connection() -> Connection:
     return connect(
-        user="kaloyan",
+        user="root",
         password=DB_PASSWORD,
         host="localhost",
         port=3306,
