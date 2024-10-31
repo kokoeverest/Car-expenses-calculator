@@ -81,6 +81,7 @@ def build_car(
         car.year,
         car.engine.emissions_category,
         car.engine.power_kw,
+        float(car.price) if car.price is not None else float(0),
     )
     car.tax = Tax(**collection_to_dict(tax_data, Tax))  # type: ignore
     car.vignette = get_vignette_price()
@@ -100,7 +101,9 @@ def build_car(
     return calculate_prices(car, fuel_per_liter, insurance)
 
 
-def get_car(brand: str, model: str, year: str, e_capacity: str, e_power: str, f_type: str):
+def get_car(
+    brand: str, model: str, year: str, e_capacity: str, e_power: str, f_type: str
+):
     result = next(
         iter(
             read_query(
@@ -124,7 +127,7 @@ def get_car(brand: str, model: str, year: str, e_capacity: str, e_power: str, f_
         None,
     )
     car.engine = (
-        Engine(**collection_to_dict(engine_data[2:], Engine)) if engine_data else None # type: ignore
+        Engine(**collection_to_dict(engine_data[2:], Engine)) if engine_data else None  # type: ignore
     )
 
     return car
