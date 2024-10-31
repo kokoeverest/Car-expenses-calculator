@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from . import WEBSITES
@@ -61,3 +62,16 @@ def close_cookies_window(driver, url):
             pass
 
     return driver
+
+
+def collection_to_dict(collection: list | tuple, entity: BaseModel):
+    """
+    Return an instance of app models, using the Pydantic BaseModel initializer. Made for simplicity and code reusability
+    (trying to eliminate the from_query() classmethod with all the variable assignments).
+
+    Args:
+        collection (list | tuple): the collection containing the values which will map to the BaseModel.model_fields
+
+        entity (BaseModel): its model_fields will be used as keys to be mapped to the collection values.
+    """
+    return {k: collection[i] for i, k in enumerate(entity.model_fields)}

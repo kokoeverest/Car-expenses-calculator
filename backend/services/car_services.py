@@ -17,6 +17,7 @@ from services.scrapers.fuel_prices_today import get_fuel_price
 from services.scrapers.insurance import get_insurance_price
 from services.scrapers.vignette import get_vignette_price
 from common.exceptions import WrongCarData
+from common.helpers import collection_to_dict
 import json
 from datetime import datetime
 from data.db_connect import read_query
@@ -53,15 +54,15 @@ def build_car(
         raise WrongCarData()
 
     if not car.engine:  # create a new engine record and update the database
-        car.engine = Engine(
-            power_hp=car_power_hp,  # user input
-            power_kw=car_power_kw,  # user input
-            capacity=engine_capacity,  # user input
-            emissions_category=get_euro_category_from_car_year(car_year),
-            fuel_type=type_fuel,  # user input
-            consumption=None,
-            oil_capacity=None,
+        engine_data = (
+            engine_capacity,
+            car_power_hp,
+            car_power_kw,
+            type_fuel,
+            get_euro_category_from_car_year(car_year),
         )
+        car.engine = Engine(**collection_to_dict(engine_data, Engine))  # type: ignore
+
         if car.engine is not None:
             car.engine.consumption = get_fuel_consumption(car)
 
@@ -73,14 +74,15 @@ def build_car(
         # return the prices of the most common tire sizes instead of *No info*
         done(str(e))
         car.tires = []
-        
-    car.tax = Tax(
-        city=city,  # user input
-        municipality=city,
-        car_age=car.year,
-        euro_category=car.engine.emissions_category,
-        car_power_kw=car.engine.power_kw,
+
+    tax_data = (
+        city,
+        city,
+        car.year,
+        car.engine.emissions_category,
+        car.engine.power_kw,
     )
+    car.tax = Tax(**collection_to_dict(tax_data, Tax))  # type: ignore
     car.vignette = get_vignette_price()
 
     insurance = get_insurance_price(car, reg, driver_age, driver_experience)
@@ -98,7 +100,7 @@ def build_car(
     return calculate_prices(car, fuel_per_liter, insurance)
 
 
-def get_car(brand: str, model: str, year: str, e_capacity, e_power, f_type):
+def get_car(brand: str, model: str, year: str, e_capacity: str, e_power: str, f_type: str):
     result = next(
         iter(
             read_query(
@@ -110,6 +112,7 @@ def get_car(brand: str, model: str, year: str, e_capacity, e_power, f_type):
 
     if not result:
         return
+
     car = Car.create_car(*result)
 
     engine_data = next(
@@ -120,7 +123,9 @@ def get_car(brand: str, model: str, year: str, e_capacity, e_power, f_type):
         ),
         None,
     )
-    car.engine = Engine.from_query(*engine_data[2:]) if engine_data else None
+    car.engine = (
+        Engine(**collection_to_dict(engine_data[2:], Engine)) if engine_data else None # type: ignore
+    )
 
     return car
 

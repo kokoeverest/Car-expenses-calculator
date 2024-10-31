@@ -4,11 +4,11 @@ from pydantic import BaseModel
 class Engine(BaseModel):
     # class Engine:
     id: int | None = None
+    capacity: str
     power_hp: str
     power_kw: str
-    capacity: str
-    emissions_category: str
     fuel_type: str
+    emissions_category: str
     consumption: float | None = None
     oil_capacity: str | None = None
     oil_type: str | None = None
