@@ -1,0 +1,43 @@
+button {
+    width: 8em;
+    border-radius: var(--borderRadius);
+    border: 2px solid;
+    padding: 0.6em 1.2em;
+    font-size: 1em;
+    font-weight: bold;
+    font-family: inherit;
+    background-color: white;
+    cursor: pointer;
+    border-color: #000000;
+    transition: border-color 0.25s;
+}
+
+button:hover {
+    border-color: var(--backGroundGrey);
+}
+
+/* button:focus, */
+button:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+}
+
+.container-buttons {
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.header .container-buttons {
+    position: fixed;
+    right: 60px;
+    top: 30px;
+}
+
+.pagination-buttons button {
+    width: 1em;
+    padding: 1rem;
+    font-size: 1em;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    background-color: var(--formGrey);
+}
