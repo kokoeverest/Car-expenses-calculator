@@ -133,6 +133,24 @@ def get_car(
     return car
 
 
+async def get_car_brands():
+    query = "SELECT DISTINCT brand FROM `Car Expenses`.`cars`;"
+    data = [next(iter(x), "").capitalize() for x in read_query(query)]
+    return data
+
+
+async def get_models_by_car_brand(brand: str):
+    query = f"SELECT DISTINCT model FROM `Car Expenses`.`cars` WHERE brand = '{brand}';"
+    data = [next(iter(x), "") for x in read_query(query)]
+    return data
+
+
+async def get_cities():
+    query = "SELECT name FROM `car expenses`.cities ORDER BY name ASC;"
+    data = [next(iter(x), "") for x in read_query(query)]
+    return data
+
+
 def calculate_prices(car: Car, fuel_price, insurance: Insurance):
     if car.engine:
         fuel_per_30000_km = (fuel_price * car.engine.consumption) * 300
