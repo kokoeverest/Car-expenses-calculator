@@ -7,7 +7,7 @@ from models.car import Car
 from common.exceptions import FuelConsumptionError
 from services.scrapers.conversions import (
     wait_for_a_second,
-    price_converter,
+    string_to_float_converter,
     find_correct_name,
     fuel_string_converter,
 )
@@ -16,13 +16,10 @@ import sys
 sys.path.append(".")
 
 
-def find_fuel_consumption(
-    brand: str, model: str, year: str, fuel_type: str, power: str, avg_consumption="0"
-):
-    # wait_for_a_second(1)
+def scrape_fuel_consumption(car: Car, avg_consumption="0"):
     with start_driver(FUEL_CONSUMPTION_WEBSITE) as driver:
         brand = find_correct_name(
-            brand,
+            car.brand,
             {opt.text for opt in Select(driver.find_element(By.ID, "manuf")).options},
         )
         if brand != "":
@@ -30,7 +27,7 @@ def find_fuel_consumption(
         wait_for_a_second(1)
         try:
             model = find_correct_name(
-                model,
+                car.model,
                 {
                     opt.text
                     for opt in Select(driver.find_element(By.ID, "model")).options
@@ -40,20 +37,26 @@ def find_fuel_consumption(
                 Select(driver.find_element(By.ID, "model")).select_by_visible_text(
                     model
                 )
-            Select(driver.find_element(By.ID, "fueltype")).select_by_visible_text(
-                fuel_string_converter(fuel_type)
+            if car.engine and car.engine.fuel:
+                Select(driver.find_element(By.ID, "fueltype")).select_by_visible_text(
+                    fuel_string_converter(car.engine.fuel.fuel_type)
+                )
+            driver.find_element(By.ID, "constyear_s").send_keys(car.year)
+            driver.find_element(By.ID, "constyear_e").send_keys(car.year)
+            driver.find_element(By.ID, "power_s").send_keys(
+                int(car.engine.power_hp) - 10 # type: ignore
             )
-            driver.find_element(By.ID, "constyear_s").send_keys(year)
-            driver.find_element(By.ID, "constyear_e").send_keys(year)
-            driver.find_element(By.ID, "power_s").send_keys(int(power) - 10)
-            driver.find_element(By.ID, "power_e").send_keys(int(power) + 10)
+            driver.find_element(By.ID, "power_e").send_keys(
+                int(car.engine.power_hp) + 10 # type: ignore
+            )
             driver.find_element(By.XPATH, "//*[@id='add']").submit()
             wait_for_a_second()
+
             avg_consumption = driver.find_element(By.CLASS_NAME, "consumption").text
         except Exception as e:
             print(e)
 
-    return avg_consumption
+    return string_to_float_converter(avg_consumption)
 
 
 def get_fuel_consumption(car: Car):
@@ -62,16 +65,11 @@ def get_fuel_consumption(car: Car):
     """
     # if such record does not exist, start the driver and scrape it from the website
     if car.engine is not None:
-        avg_consumption = find_fuel_consumption(
-            car.brand,
-            car.model,
-            car.year,
-            car.engine.fuel_type,
-            car.engine.power_hp,
-        )
-        if avg_consumption != "0":
+        car.engine.consumption = scrape_fuel_consumption(car)
+        if car.engine.consumption != float(0):
             # insert into the database, don't forget to update the cars_engines table!
-            car.engine.consumption = price_converter(avg_consumption)
+            # good to be modified to have the two insert queries in one transaction
+
             car.engine.id = insert_query(
                 """INSERT INTO `Car Expenses`.`Engines`
             (`Capacity`,`Power_hp`,`Power_kw`,`Fuel type`,`Emmissions category`,`Consumption`)
@@ -80,7 +78,7 @@ def get_fuel_consumption(car: Car):
                     car.engine.capacity,
                     car.engine.power_hp,
                     car.engine.power_kw,
-                    car.engine.fuel_type,
+                    car.engine.fuel.fuel_type,
                     car.engine.emissions_category,
                     car.engine.consumption,
                 ),
@@ -92,4 +90,4 @@ def get_fuel_consumption(car: Car):
             "CALL `Car Expenses`.`update_cars_engines`(?, ?);", (car.id, car.engine.id)
         )
 
-    return price_converter(avg_consumption)
+    return car.engine.consumption if car.engine and car.engine.consumption else None

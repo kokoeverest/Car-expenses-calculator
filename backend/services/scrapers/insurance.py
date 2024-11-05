@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from services.scrapers.conversions import (
     wait_for_a_second,
-    price_converter,
+    string_to_float_converter,
     engine_size_converter,
     insurance_power_converter,
 )
@@ -35,7 +35,7 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
         car_data = (
             car.year,
             car.engine.capacity,
-            car.engine.fuel_type,
+            car.engine.fuel.fuel_type,
             car.engine.power_hp,
             get_prefix(car.tax.city),
             registration,
@@ -73,7 +73,7 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
                     engine_size
                 )
                 Select(driver.find_element(By.ID, "dvigatelType")).select_by_value(
-                    fuel[car.engine.fuel_type]
+                    fuel[car.engine.fuel.fuel_type]
                 )
                 Select(driver.find_element(By.ID, "ksiliSelect")).select_by_value(power)
                 Select(driver.find_element(By.ID, "seatNumberSelect")).select_by_value(
@@ -108,7 +108,7 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
                 wait_for_a_second()
 
                 temp_prices = [
-                    price_converter(el.text.split("\n")[1])
+                    string_to_float_converter(el.text.split("\n")[1])
                     for el in driver.find_elements(By.CLASS_NAME, "oi-compare-row")
                 ]
                 insurance.min_price, insurance.max_price = (
@@ -117,7 +117,7 @@ def get_insurance_price(car: Car, registration, driver_age, driver_experience="5
                 )
                 _ = insert_query(
                     f"""CALL `Car Expenses`.`add_insurance`(
-                        '{car.year}', '{car.engine.capacity}', '{car.engine.fuel_type}', 
+                        '{car.year}', '{car.engine.capacity}', '{car.engine.fuel.fuel_type}', 
                         '{car.engine.power_hp}', '{municipality}', {registration}, 
                         {driver_age if driver_age is not None else "NULL"}, '{driver_experience}', 
                         {insurance.min_price}, {insurance.max_price}, '{date.today()}');"""

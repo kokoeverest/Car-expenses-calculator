@@ -2,6 +2,7 @@ from typing import Annotated
 from common.exceptions import WrongCarData
 from fastapi import APIRouter, Body, Response, status, Form
 from fastapi.responses import JSONResponse
+from models.car import Car
 import services.car_services as cs
 from routers.responses import car_responses
 import sys
@@ -24,7 +25,7 @@ def get_car_prices(
     car_price: Annotated[str, Body()] = "",
 ):
     try:
-        car_price = cs.build_car(
+        car: Car = cs.build_car(
             brand,
             model,
             year,
@@ -42,6 +43,7 @@ def get_car_prices(
         )
     except WrongCarData:
         return Response(
+            content=f"No information for {brand} {model}-{year} could be found",
             status_code=status.HTTP_204_NO_CONTENT,
         )
     except Exception as e:
@@ -50,7 +52,7 @@ def get_car_prices(
             content="Something went wrong",
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
-    return JSONResponse(car_price)
+    return car
 
 
 @car_router.post("/", tags=["Car price client form"], responses=car_responses)
@@ -66,46 +68,18 @@ def get_car_prices_from_form(
     car_price: Annotated[str, Form()] = "",
 ):
     print("Retrieving data from form: ")
-    # return get_car_prices(
-    #     brand,
-    #     model,
-    #     year,
-    #     fuel_type,
-    #     engine_capacity,
-    #     city,
-    #     power_hp,
-    #     power_kw,
-    #     car_price,
-    # )
+    return get_car_prices(
+        brand,
+        model,
+        year,
+        fuel_type,
+        engine_capacity,
+        city,
+        power_hp,
+        power_kw,
+        car_price,
+    )
 
-    try:
-        car_price = cs.build_car(
-            brand,
-            model,
-            year,
-            power_hp,
-            power_kw,
-            fuel_type,
-            engine_capacity,
-            city,
-            car_price,
-        )
-    except RecursionError:
-        return Response(
-            content="Invalid engine capacity! (No whitespaces, please)",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
-    except WrongCarData:
-        return Response(
-            status_code=status.HTTP_204_NO_CONTENT,
-        )
-    except Exception as e:
-        print(str(e))
-        return Response(
-            content="Something went wrong",
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-    return JSONResponse(car_price)
 
 @car_router.get("/brands")
 async def get_all_car_brands():

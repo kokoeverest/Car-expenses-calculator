@@ -8,7 +8,7 @@ from models.insurance import INSURANCE_FUEL_VALUES as fuel
 from services.scrapers.insurance import try_click
 from services.scrapers.conversions import (
     wait_for_a_second,
-    price_converter,
+    string_to_float_converter,
     engine_size_converter,
     insurance_power_converter,
 )
@@ -90,7 +90,7 @@ class InsurancePageTest(unittest.TestCase):
         wait_for_a_second()
 
         temp_prices = [
-            price_converter(el.text.split("\n")[1])
+            string_to_float_converter(el.text.split("\n")[1])
             for el in self.driver.find_elements(By.CLASS_NAME, "oi-compare-row")
         ]
         # Assert

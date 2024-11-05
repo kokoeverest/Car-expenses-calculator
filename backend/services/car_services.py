@@ -1,5 +1,5 @@
 from models.car import Car
-from models.insurance import Insurance
+from models.fuel import Fuel
 from models.tax import Tax
 from models.engine import Engine
 from models.tire import Tire
@@ -33,7 +33,7 @@ def build_car(
     engine_capacity: str,
     city: str,
     car_price: str | None = None,
-    reg: int = 0,
+    registration: int = 0,
     driver_age: str | None = None,
     driver_experience: str = "5",
 ):
@@ -55,11 +55,15 @@ def build_car(
 
     if not car.engine:  # create a new engine record and update the database
         engine_data = (
+            None,
             engine_capacity,
             car_power_hp,
             car_power_kw,
             type_fuel,
             get_euro_category_from_car_year(car_year),
+            None,
+            None,
+            None,
         )
         car.engine = Engine(**collection_to_dict(engine_data, Engine))  # type: ignore
 
@@ -84,13 +88,28 @@ def build_car(
         float(car.price) if car.price is not None else float(0),
     )
     car.tax = Tax(**collection_to_dict(tax_data, Tax))  # type: ignore
+    if car.tax:
+        car.tax.price = get_tax_price(
+            [
+                car.tax.city,
+                car.tax.municipality,
+                car.tax.car_age,
+                car.tax.euro_category,
+                car.tax.car_power_kw,
+            ]
+        )
+    else:
+        raise ValueError("No tax data")
+
     car.vignette = get_vignette_price()
 
-    insurance = get_insurance_price(car, reg, driver_age, driver_experience)
-    if car.engine.fuel_type != "eev":
-        fuel_per_liter = get_fuel_price(car.engine.fuel_type)
+    car.insurance = get_insurance_price(
+        car, registration, driver_age, driver_experience
+    )
+    if car.engine.fuel.fuel_type != "eev":
+        car.engine.fuel.price = get_fuel_price(car.engine.fuel.fuel_type)
     else:
-        fuel_per_liter = 0
+        car.engine.fuel.price = 0
 
     car.price = car_price
 
@@ -98,7 +117,7 @@ def build_car(
     diff = end - start
     print(f"Search duration: {diff}")
 
-    return calculate_prices(car, fuel_per_liter, insurance)
+    return car
 
 
 def get_car(
@@ -126,6 +145,11 @@ def get_car(
         ),
         None,
     )
+    new_fuel = Fuel(**collection_to_dict((f_type, float(0), None), Fuel)) # type: ignore
+    if engine_data:
+        engine_data = list(engine_data)
+        engine_data[6] = new_fuel
+
     car.engine = (
         Engine(**collection_to_dict(engine_data[2:], Engine)) if engine_data else None  # type: ignore
     )
@@ -151,44 +175,36 @@ async def get_cities():
     return data
 
 
-def calculate_prices(car: Car, fuel_price, insurance: Insurance):
-    if car.engine:
-        fuel_per_30000_km = (fuel_price * car.engine.consumption) * 300
-        fuel_per_10000_km = (fuel_price * car.engine.consumption) * 100
+def calculate_prices(car: Car):
+    if (
+        car.engine
+        and car.engine.fuel
+        and car.engine.fuel.price
+        and car.engine.consumption
+    ):
+        fuel_per_30000_km = (car.engine.fuel.price * car.engine.consumption) * 300
+        fuel_per_10000_km = (car.engine.fuel.price * car.engine.consumption) * 100
     else:
         raise ValueError("No engine data")
-
-    if car.tax:
-        tax_price = get_tax_price(
-            [
-                car.tax.city,
-                car.tax.municipality,
-                car.tax.car_age,
-                car.tax.euro_category,
-                car.tax.car_power_kw,
-            ]
-        )
-    else:
-        raise ValueError("No tax data")
 
     tires_max_price, tires_min_price = car.calculate_tires_price()
 
     total_min_price = sum(
         (
-            tax_price,
+            car.tax.price if car.tax else 0,
             fuel_per_10000_km,
             tires_min_price,
-            insurance.min_price,
+            car.insurance.min_price if car.insurance else 0,
             car.vignette,
         ),
         start=0,
     )
     total_max_price = sum(
         (
-            tax_price,
+            car.tax.price if car.tax else 0,
             fuel_per_30000_km,
             tires_max_price,
-            insurance.max_price,
+            car.insurance.max_price if car.insurance else 0,
             car.vignette,
         ),
         start=0,
@@ -197,9 +213,9 @@ def calculate_prices(car: Car, fuel_price, insurance: Insurance):
 
     result_min = {
         "Обща минимална цена": f"{total_min_price:.2f} лв",
-        "Данък": f"{tax_price:.2f} лв",
+        "Данък": f"{car.tax.price  if car.tax else 0:.2f} лв",
         "Гориво за 10000 км годишен пробег": f"{fuel_per_10000_km:.2f} лв ({fuel_per_10000_km/12:.2f} лв/месец)",
-        "Най-ниска цена на застраховка ГО": f"{insurance.min_price:.2f} лв (еднократно плащане)",
+        "Най-ниска цена на застраховка ГО": f"{(car.insurance.min_price if car.insurance else 0):.2f} лв (еднократно плащане)",
         "Най-евтини гуми (1 брой)": {
             str(tire): f"{tire.min_price} лв"
             for tire in car.tires
@@ -209,9 +225,9 @@ def calculate_prices(car: Car, fuel_price, insurance: Insurance):
 
     result_max = {
         "Обща максимална цена": f"{total_max_price:.2f} лв",
-        "Данък": f"{tax_price:.2f} лв",
+        "Данък": f"{car.tax.price if car.tax else 0:.2f} лв",
         "Гориво за 30000 км годишен пробег": f"{fuel_per_30000_km:.2f} лв ({fuel_per_30000_km/12:.2f} лв/месец)",
-        "Най-висока цена на застраховка ГО": f"{insurance.max_price:.2f} лв (еднократно плащане)",
+        "Най-висока цена на застраховка ГО": f"{(car.insurance.max_price if car.insurance else 0):.2f} лв (еднократно плащане)",
         "Годишна винетка": f"{car.vignette:.2f} лв",
         "Най-скъпи гуми (1 брой)": {
             str(tire): f"{tire.max_price} лв"

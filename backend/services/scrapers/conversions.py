@@ -144,7 +144,7 @@ def car_string_converter(string: str):
     return string.replace(" ", "-").lower()
 
 
-def price_converter(price: str):
+def string_to_float_converter(price: str):
     try:
         return float(price.replace(",", "."))
     except Exception:

@@ -1,4 +1,5 @@
 from models.engine import Engine
+from models.insurance import Insurance
 from models.tax import Tax
 from models.tire import Tire
 from pydantic import BaseModel
@@ -13,7 +14,7 @@ class Car(BaseModel):
     tax: Tax | None = None
     tires: list[Tire] | str = [] 
     price: str | None = None
-    insurance: int | None = None
+    insurance: Insurance | None = None
     vignette: float = 87
     seats: int = 5
 
@@ -37,7 +38,7 @@ class Car(BaseModel):
                 "Година": self.year,
                 "Двигател": f"{self.engine.capacity} куб.см.",
                 "Мощност": f"{self.engine.power_hp} кс",
-                "Гориво": self.engine.fuel_type,
+                "Гориво": self.engine.fuel,
                 "Среден разход": f"{self.engine.consumption:.2f} л/100 км",
                 "Цена": f"{self.price}" if self.price else None,
             }

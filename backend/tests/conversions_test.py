@@ -122,7 +122,7 @@ class ConversionsTests(unittest.TestCase):
 
         # Act & Assert
         for price in td.valid_product_prices:
-            actual_result = con.price_converter(price)
+            actual_result = con.string_to_float_converter(price)
             self.assertEqual(actual_result, excpected_result)
             self.assertIsInstance(actual_result, float)
 
@@ -131,7 +131,7 @@ class ConversionsTests(unittest.TestCase):
         excpected_result = 0.0
 
         # Act
-        actual_result = con.price_converter(td.invalid_product_price)
+        actual_result = con.string_to_float_converter(td.invalid_product_price)
 
         # Assert
         self.assertEqual(actual_result, excpected_result)

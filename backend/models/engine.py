@@ -1,13 +1,14 @@
 from pydantic import BaseModel
 
+from models.fuel import Fuel
+
 
 class Engine(BaseModel):
-    # class Engine:
     id: int | None = None
     capacity: str
     power_hp: str
     power_kw: str
-    fuel_type: str
+    fuel: Fuel
     emissions_category: str
     consumption: float | None = None
     oil_capacity: str | None = None
@@ -21,7 +22,7 @@ class Engine(BaseModel):
             id=id,
             power_hp=pow_hp,
             power_kw=pow_kw,
-            fuel_type=f_type,
+            fuel=f_type,
             capacity=cap,
             oil_capacity=oil_cap,
             consumption=cons,
@@ -31,5 +32,5 @@ class Engine(BaseModel):
 
     def __repr__(self) -> str:
         return (
-            f"{__class__}, capacity: {self.capacity}, {self.fuel_type}, {self.power_hp}"
+            f"{__class__}, capacity: {self.capacity}, {self.fuel}, {self.power_hp}"
         )
