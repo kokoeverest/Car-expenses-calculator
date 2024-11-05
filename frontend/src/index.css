@@ -1,4 +1,9 @@
 :root {
+  --backGroundGrey: #c2bbbb;
+  --backGroundOrange: #fa8233;
+  --backGroundBlue: #4398f1;
+  --formGrey: rgb(235, 229, 229);
+  --borderRadius: '10px';
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;

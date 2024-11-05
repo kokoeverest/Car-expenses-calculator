@@ -1,24 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useNavigate } from "react-router-dom";
 import { CircularProgress, MenuItem, TextField } from "@mui/material";
 import { useMutation, UseMutationResult, useQuery, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import StyledButton from "../components/controls/StyledButton";
-import StyledForm from "../components/controls/StyledForm";
+import StyledFormDesktop from "../components/controls/StyledFormDesktop";
 import { CarDetailFormInput } from "./abstract";
 import carApi from "../api/carApi";
 import CarDetailsSchema from "./schemas";
+import CarPriceResult from "./CarPriceResult";
 import { Car } from "../types/car";
 
 const CarDetailsForm: React.FC = () =>
 {
-    const navigate = useNavigate();
     const queryClient = useQueryClient();
-    const [ selectedCarBrand, setSelectedCarBrand ] = useState( 'Audi' );
-    const [ selectedModel, setSelectedModel ] = useState( 'a1' );
-    const [ selectedCity, setSelectedCity ] = useState( 'София' );
+    const [ selectedCarBrand, setSelectedCarBrand ] = useState( 'Volvo' );
+    const [ selectedModel, setSelectedModel ] = useState( '' );
+    const [ selectedCity, setSelectedCity ] = useState( '' );
     const [ selectedFuelType, setSelectedFuelType ] = useState( 'diesel' );
+    const [ selectedYear, setSelectedYear ] = useState( '2015' );
+    const [ openDialog, setOpenDialog ] = useState( false );
+    const [ carData, setCarData ] = useState<Car | null>( null );
+
 
     const fuel_types: string[] = [
         "eev",
@@ -46,15 +49,15 @@ const CarDetailsForm: React.FC = () =>
         resolver: yupResolver( CarDetailsSchema ),
     } );
 
+    const brandsQuery: UseQueryResult<string[], Error> = useQuery( {
+        queryKey: [ 'getCarBrands' ],
+        queryFn: carApi.getCarBrands,
+    } );
+
     const carModelsQuery: UseQueryResult<string[], Error> = useQuery( {
         queryKey: [ "getCarModels", selectedCarBrand ],
         queryFn: (): Promise<string[]> => carApi.getModels( selectedCarBrand ),
         enabled: !!selectedCarBrand,
-    } );
-
-    const brandsQuery: UseQueryResult<string[], Error> = useQuery( {
-        queryKey: [ 'getCarBrands' ],
-        queryFn: carApi.getCarBrands,
     } );
 
     const citiesQuery: UseQueryResult<string[], Error> = useQuery( {
@@ -64,12 +67,12 @@ const CarDetailsForm: React.FC = () =>
 
     const mutation: UseMutationResult<Car, Error, CarDetailFormInput, unknown> = useMutation( {
         mutationFn: carApi.getCarPrice,
-        onSuccess: (): void =>
+        onSuccess: ( data: Car ): void =>
         {
-            alert( "Successful! Thank you!" );
-            // navigate( "/" );
-            queryClient.invalidateQueries( { queryKey: [ 'getCarBrands', 'getCarModels', 'getCities' ] } );
-        },
+            setCarData( data );
+            setOpenDialog( true );
+            queryClient.invalidateQueries( { queryKey: [ 'getCarModels', 'getCities' ] } );
+        }
     } );
 
     const onSubmitHandler: SubmitHandler<CarDetailFormInput> = async ( data: CarDetailFormInput ): Promise<void> =>
@@ -85,8 +88,8 @@ const CarDetailsForm: React.FC = () =>
 
     return (
         <>
-            { !mutation.isError && !mutation.isPending && !carModelsQuery.isPending && (
-                <StyledForm onSubmit={ handleSubmit( onSubmitHandler ) }>
+            { !mutation.isPending && !carModelsQuery.isPending && (
+                <StyledFormDesktop onSubmit={ handleSubmit( onSubmitHandler ) }>
                     <h1>Enter the car data</h1>
 
                     <TextField
@@ -126,8 +129,9 @@ const CarDetailsForm: React.FC = () =>
                         select
                         label="Year"
                         error={ !!errors.year }
-                        value={ "2024" }
+                        value={ selectedYear }
                         helperText={ "Select the year of the car" }
+                        onChange={ ( event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> ): void => setSelectedYear( event.target.value ) }
                     >
                         { getYears().map( ( year: number ) => (
                             <MenuItem key={ year } value={ year }>
@@ -206,10 +210,15 @@ const CarDetailsForm: React.FC = () =>
                     <StyledButton type="submit" disabled={ mutation.isPending }>
                         { mutation.isPending ? <CircularProgress size={ "15rem" } /> : "Submit" }
                     </StyledButton>
-                </StyledForm>
-            ) }
+                </StyledFormDesktop>
 
-            { mutation.isError && <h3>Error</h3> }
+            ) }
+            <CarPriceResult
+                car={ carData }
+                open={ openDialog }
+                onClose={ () => setOpenDialog( false ) }
+            />
+
             { ( carModelsQuery.isPending || mutation.isPending ) && <CircularProgress size={ "15rem" } variant="indeterminate" /> }
         </>
     );

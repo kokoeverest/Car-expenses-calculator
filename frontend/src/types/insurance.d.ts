@@ -1,6 +1,6 @@
 export interface Insurance
 {
-    id: number | null;
+    id: number;
     year: string;
     engine_size: string;
     fuel_type: string;

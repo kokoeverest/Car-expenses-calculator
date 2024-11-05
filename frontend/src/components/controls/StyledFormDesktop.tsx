@@ -2,9 +2,10 @@ import * as React from 'react';
 import Box, { BoxProps } from '@mui/material/Box';
 
 
-const StyledForm: React.FC<BoxProps> = ( { children, ...rest } ) => (
+const StyledFormDesktop: React.FC<BoxProps> = ( { children, ...rest } ) => (
     <Box
         component="form"
+        autoComplete="on"
         sx={ {
             m: 'auto',
             p: 2,
@@ -14,9 +15,9 @@ const StyledForm: React.FC<BoxProps> = ( { children, ...rest } ) => (
             justifyContent: 'center',
             border: '1px solid var(--backGroundOrange)',
             gridTemplateColumns: 'repeat(auto-fit, minmax(600px, 1fr))',
-            '& .MuiTextField-root': { m: 2, width: '80%' },
-            maxWidth: '80%',
-            backgroundColor: 'lightgrey',//'var(--formGrey)',
+            '& .MuiTextField-root': { m: 2, width: '60%' },
+            maxWidth: '60%',
+            backgroundColor: 'var(--formGrey)',
             color: 'black'
         } }
         { ...rest }
@@ -25,4 +26,4 @@ const StyledForm: React.FC<BoxProps> = ( { children, ...rest } ) => (
     </Box>
 );
 
-export default StyledForm; 
+export default StyledFormDesktop; 

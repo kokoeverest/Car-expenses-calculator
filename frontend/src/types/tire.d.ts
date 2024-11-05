@@ -4,6 +4,6 @@ export interface Tire
     height: string;
     prefix: string;
     size: string;
-    min_price: number | null;
-    max_price: number | null;
+    min_price: number;
+    max_price: number;
 }

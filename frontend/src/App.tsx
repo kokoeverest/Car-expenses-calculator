@@ -7,20 +7,20 @@ import Header from "./components/Header";
 import CarDetailsForm from "./features/CarDetailsForm";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+
 const queryClient = new QueryClient();
 const App: React.FC = () =>
 {
   return (
-    
-    <QueryClientProvider client= {queryClient}>
+
+    <QueryClientProvider client={ queryClient }>
       <Router>
         <Header />
         <Box className="main-content">
           <Routes>
             <Route path="/" element={ <WelcomePage /> } />
-            <Route path="/form" element={ < CarDetailsForm/> } />
+            <Route path="/form" element={ < CarDetailsForm /> } />
 
-            
           </Routes>
         </Box>
       </Router>

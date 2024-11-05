@@ -13,7 +13,7 @@ const carApi = {
                 "Content-Type": "multipart/form-data",
             },
         } );
-
+        console.log("Response data:\n", response.data)
         return response.data;
     },
 

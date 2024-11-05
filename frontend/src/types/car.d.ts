@@ -5,15 +5,15 @@ import { Insurance } from "./insurance";
 
 export interface Car
 {
-    id: number | null;
+    id: number;
     brand: string;
     model: string;
     year: string;
-    engine: Engine | null;
-    tax: Tax | null;
+    engine: Engine;
+    tax: Tax;
     tires: Array<Tire> | string;
     price: string;
-    insurance: Insurance | number | null;
+    insurance: Insurance;
     vignette: number;
     seats: number;
 }
