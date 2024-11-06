@@ -11,7 +11,7 @@ export interface Car
     year: string;
     engine: Engine;
     tax: Tax;
-    tires: Array<Tire> | string;
+    tires: Tire[];
     price: string;
     insurance: Insurance;
     vignette: number;

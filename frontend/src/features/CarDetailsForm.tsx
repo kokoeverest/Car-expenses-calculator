@@ -8,13 +8,17 @@ import StyledFormDesktop from "../components/controls/StyledFormDesktop";
 import { CarDetailFormInput } from "./abstract";
 import carApi from "../api/carApi";
 import CarDetailsSchema from "./schemas";
-import CarPriceResult from "./CarPriceResult";
+import CarPriceResponse from "./responses/CarPriceResponse";
 import { Car } from "../types/car";
+import StyledText from "../components/controls/StyledText";
+import CarPriceNotFoundResponse from "./responses/CarPriceNotFoundResponse";
+import { useCarBrands } from "../context/CarBrandsContext";
 
 const CarDetailsForm: React.FC = () =>
 {
+    const carBrands = useCarBrands();
     const queryClient = useQueryClient();
-    const [ selectedCarBrand, setSelectedCarBrand ] = useState( 'Volvo' );
+    const [ selectedCarBrand, setSelectedCarBrand ] = useState<string | null>( null );
     const [ selectedModel, setSelectedModel ] = useState( '' );
     const [ selectedCity, setSelectedCity ] = useState( '' );
     const [ selectedFuelType, setSelectedFuelType ] = useState( 'diesel' );
@@ -49,15 +53,11 @@ const CarDetailsForm: React.FC = () =>
         resolver: yupResolver( CarDetailsSchema ),
     } );
 
-    const brandsQuery: UseQueryResult<string[], Error> = useQuery( {
-        queryKey: [ 'getCarBrands' ],
-        queryFn: carApi.getCarBrands,
-    } );
 
     const carModelsQuery: UseQueryResult<string[], Error> = useQuery( {
         queryKey: [ "getCarModels", selectedCarBrand ],
-        queryFn: (): Promise<string[]> => carApi.getModels( selectedCarBrand ),
-        enabled: !!selectedCarBrand,
+        queryFn: (): Promise<string[]> => carApi.getModels( selectedCarBrand! ),
+        // enabled: selectedCarBrand == null,
     } );
 
     const citiesQuery: UseQueryResult<string[], Error> = useQuery( {
@@ -72,6 +72,10 @@ const CarDetailsForm: React.FC = () =>
             setCarData( data );
             setOpenDialog( true );
             queryClient.invalidateQueries( { queryKey: [ 'getCarModels', 'getCities' ] } );
+        },
+        onError: (): void =>
+        {
+            setOpenDialog( true );
         }
     } );
 
@@ -90,7 +94,7 @@ const CarDetailsForm: React.FC = () =>
         <>
             { !mutation.isPending && !carModelsQuery.isPending && (
                 <StyledFormDesktop onSubmit={ handleSubmit( onSubmitHandler ) }>
-                    <h1>Enter the car data</h1>
+                    <StyledText variant="h4">Enter the car data</StyledText>
 
                     <TextField
                         { ...register( "brand" ) }
@@ -101,7 +105,7 @@ const CarDetailsForm: React.FC = () =>
                         value={ selectedCarBrand }
                         onChange={ ( event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> ): void => setSelectedCarBrand( event.target.value ) }
                     >
-                        { brandsQuery.data?.map( ( brand: string ) => (
+                        { carBrands?.map( ( brand: string ) => (
                             <MenuItem key={ brand } value={ brand }>
                                 { brand }
                             </MenuItem>
@@ -213,13 +217,28 @@ const CarDetailsForm: React.FC = () =>
                 </StyledFormDesktop>
 
             ) }
-            <CarPriceResult
-                car={ carData }
-                open={ openDialog }
-                onClose={ () => setOpenDialog( false ) }
-            />
-
-            { ( carModelsQuery.isPending || mutation.isPending ) && <CircularProgress size={ "15rem" } variant="indeterminate" /> }
+            { carData &&
+                <CarPriceResponse
+                    car={ carData }
+                    open={ openDialog }
+                    onClose={ () => setOpenDialog( false ) }
+                />
+            }
+            { ( carModelsQuery.isPending || mutation.isPending ) &&
+                <>
+                    <CircularProgress size={ "15rem" } variant="indeterminate" />
+                    <StyledText>Collecting car prices, please wait...</StyledText>
+                </>
+            }
+            { !carData && mutation.isError &&
+                <CarPriceNotFoundResponse
+                    brand={ selectedCarBrand! }
+                    model={ selectedModel }
+                    year={ selectedYear }
+                    open={ openDialog }
+                    onClose={ () => setOpenDialog( false ) }
+                />
+            }
         </>
     );
 };
