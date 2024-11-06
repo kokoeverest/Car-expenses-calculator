@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import StyledText from './controls/StyledText';
 
 const Header: React.FC = () =>
 {
@@ -13,7 +14,13 @@ const Header: React.FC = () =>
 
     return (
         <div className="header">
-            <h1 className='headerTitle' onClick={ handleTitleClick }>What's the price</h1>
+            <StyledText 
+            variant='h2' 
+            className='headerTitle' 
+            onClick={handleTitleClick}
+            sx={{color:"yellowgreen"}}
+            >
+                What's the price</StyledText>
         </div>
     );
 };

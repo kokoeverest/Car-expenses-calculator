@@ -20,7 +20,7 @@ const WelcomePage: React.FC = () =>
             </Box>
             <Box className="welcome-page">
                 <Divider></Divider>
-                    <StyledButton onClick={ handleExploreClick }>Go to form</StyledButton>
+                    <StyledButton onClick={ handleExploreClick }>Click to search for a car</StyledButton>
             </Box>
         </>
     );
