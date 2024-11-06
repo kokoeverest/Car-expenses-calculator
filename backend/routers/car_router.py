@@ -1,7 +1,6 @@
 from typing import Annotated
 from common.exceptions import WrongCarData
 from fastapi import APIRouter, Body, Response, status, Form
-from fastapi.responses import JSONResponse
 from models.car import Car
 import services.car_services as cs
 from routers.responses import car_responses
@@ -44,7 +43,7 @@ def get_car_prices(
     except WrongCarData:
         return Response(
             content=f"No information for {brand} {model}-{year} could be found",
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_400_BAD_REQUEST,
         )
     except Exception as e:
         print(str(e))

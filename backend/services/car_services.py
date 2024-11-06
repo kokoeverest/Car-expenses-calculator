@@ -54,12 +54,13 @@ def build_car(
         raise WrongCarData()
 
     if not car.engine:  # create a new engine record and update the database
+        new_fuel = Fuel(**collection_to_dict((type_fuel, float(0), None), Fuel))  # type: ignore
         engine_data = (
             None,
             engine_capacity,
             car_power_hp,
             car_power_kw,
-            type_fuel,
+            new_fuel,
             get_euro_category_from_car_year(car_year),
             None,
             None,
@@ -145,8 +146,8 @@ def get_car(
         ),
         None,
     )
-    new_fuel = Fuel(**collection_to_dict((f_type, float(0), None), Fuel)) # type: ignore
     if engine_data:
+        new_fuel = Fuel(**collection_to_dict((f_type, float(0), None), Fuel)) # type: ignore
         engine_data = list(engine_data)
         engine_data[6] = new_fuel
 
