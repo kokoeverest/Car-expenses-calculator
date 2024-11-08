@@ -31,7 +31,7 @@ def start_driver(url, headless=False):
     return close_cookies_window(driver, url)
 
 
-def close_cookies_window(driver, url):
+def close_cookies_window(driver: webdriver.Chrome, url):
     """
     Deal with the cookies pop up windows across the websites.
     """

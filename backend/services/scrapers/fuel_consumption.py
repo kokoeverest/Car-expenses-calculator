@@ -15,7 +15,6 @@ import sys
 
 sys.path.append(".")
 
-
 def scrape_fuel_consumption(car: Car, avg_consumption="0"):
     with start_driver(FUEL_CONSUMPTION_WEBSITE) as driver:
         brand = find_correct_name(
@@ -90,4 +89,4 @@ def get_fuel_consumption(car: Car):
             "CALL `Car Expenses`.`update_cars_engines`(?, ?);", (car.id, car.engine.id)
         )
 
-    return car.engine.consumption if car.engine and car.engine.consumption else None
+    return car.engine.consumption if car.engine else 0

@@ -7,8 +7,8 @@ class Tire(BaseModel):
     height: str
     prefix: str = "R"
     size: str
-    min_price: float | None = None
-    max_price: float | None = None
+    min_price: float = 0
+    max_price: float = 0
 
     @classmethod
     def from_query(cls, p, w, h, s, min_price, max_price):

@@ -10,7 +10,7 @@ class Engine(BaseModel):
     power_kw: str
     fuel: Fuel
     emissions_category: str
-    consumption: float | None = None
+    consumption: float = 0
     oil_capacity: str | None = None
     oil_type: str | None = None
 

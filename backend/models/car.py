@@ -9,11 +9,11 @@ class Car(BaseModel):
     id: int | None = None
     brand: str
     model: str
-    year: str#| int
+    year: str
     engine: Engine | None = None
     tax: Tax | None = None
     tires: list[Tire] | str = [] 
-    price: str | None = None
+    price: str | float = 0
     insurance: Insurance | None = None
     vignette: float = 87
     seats: int = 5
@@ -45,7 +45,7 @@ class Car(BaseModel):
 
     def calculate_tires_price(self):
         max_price = max(
-            (tire.max_price for tire in self.tires if tire.max_price), default=0 # type:ignore
+            (tire.max_price for tire in self.tires if tire.max_price), default=0  # type: ignore
         )
         min_price = min(
             (tire.min_price for tire in self.tires if tire.min_price), default=0 # type:ignore

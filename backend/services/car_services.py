@@ -32,7 +32,7 @@ def build_car(
     type_fuel: str,
     engine_capacity: str,
     city: str,
-    car_price: str | None = None,
+    car_price: str | float = 0,
     registration: int = 0,
     driver_age: str | None = None,
     driver_experience: str = "5",
@@ -62,7 +62,7 @@ def build_car(
             car_power_kw,
             new_fuel,
             get_euro_category_from_car_year(car_year),
-            None,
+            0.0,
             None,
             None,
         )
@@ -86,7 +86,7 @@ def build_car(
         car.year,
         car.engine.emissions_category,
         car.engine.power_kw,
-        float(car.price) if car.price is not None else float(0),
+        float(car.price),
     )
     car.tax = Tax(**collection_to_dict(tax_data, Tax))  # type: ignore
     if car.tax:

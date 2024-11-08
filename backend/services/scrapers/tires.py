@@ -1,5 +1,6 @@
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
+from selenium import webdriver
 from datetime import date
 import re
 import sys
@@ -21,7 +22,7 @@ from data.db_connect import (
 FIND_TIRE_SIZE_PATTERN = r"\d{3}/\d{2}R\d{2}|\d{3}/\d{2}ZR\d{2}"
 
 
-def find_tire_sizes(driver):
+def find_tire_sizes(driver: webdriver.Chrome):
     """Search for the available car tires using the regular expression pattern"""
     possible_tire_sizes = set()
     wait_for_a_second()
@@ -35,7 +36,9 @@ def find_tire_sizes(driver):
     return possible_tire_sizes
 
 
-def collect_tires_prices(tire_sizes: set | list, driver) -> list[Tire] | list:
+def collect_tires_prices(
+    tire_sizes: set | list, driver: webdriver.Chrome
+) -> list[Tire] | list:
     """Search for the minimum and maximum price of each tire in the list.
     Returns a new list with Tire objects"""
     tires = []
@@ -60,25 +63,22 @@ def collect_tires_prices(tire_sizes: set | list, driver) -> list[Tire] | list:
     return tires
 
 
-def add_product_price(driver):
+def add_product_price(driver: webdriver.Chrome) -> float:
     """Get the price of the first found product"""
     wait_for_a_second(1)
 
     try:
         product = driver.find_element(By.CLASS_NAME, "price").text
-    except Exception:
-        return
 
-    try:
         matches = re.findall(r"^\d+,\d+|^\d+\.\d+|^\d+", product)
         if len(matches) > 0:
             product: str = matches[0]
 
             # if the price of one tire is ridiculously high, above 1000 leva, it will be separated by a comma
             product = product.replace(",", "")
-            return float(product)
+        return float(product)
     except Exception:
-        return
+        return float(0)
 
 
 def get_tires_prices(car: Car):
@@ -105,7 +105,7 @@ def get_tires_prices(car: Car):
     )
     print("Missing sizes: ", missing_sizes)
     if len(missing_sizes) == 0:
-        return existing_tires
+        return sorted(existing_tires, key=lambda x: x.size)
 
     # if there are missing tires in the ddatabase - scrape them and update the info for each tire
     today = date.today()
@@ -123,7 +123,7 @@ def get_tires_prices(car: Car):
 
     _ = multiple_insert_queries(missing_query)
 
-    return list(set(collected_tires + existing_tires))
+    return sorted(list(set(collected_tires + existing_tires)), key=lambda x: x.size)
 
 
 def scrape_possible_tires(brand, model, year):
