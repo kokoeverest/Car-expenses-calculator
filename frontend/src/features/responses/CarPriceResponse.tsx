@@ -19,6 +19,13 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
     const [ scroll ] = useState<DialogProps[ 'scroll' ]>( 'paper' );
     const descriptionElementRef = useRef<HTMLElement>( null );
     const currencyBgn: string = " лв.";
+    const fuelTypesEnToBg: { [ key: string ]: string; } = {
+        "eev": "eev",
+        "gasoline": "бензин",
+        "diesel": "дизел",
+        "lpg": "газ",
+        "methane": "метан",
+    };
 
     const fuelPerYear: ( mileage: number ) => number = ( mileage: number, car_f: Car = car ): number =>
     {
@@ -49,7 +56,6 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
             aria-labelledby="car-price-dialog--title"
             aria-describedby="car-price-dialog-description"
             fullWidth={ true }
-            // maxWidth= {"md"}
             maxWidth={ false }
         >
             <DialogTitle id="car-price-dialog-title"
@@ -119,7 +125,7 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
                                     </TableCell>
                                 </TableRow>
                                 <TableCell colSpan={ 1 }>
-                                    <StyledText>(актуална цена { car.engine.fuel.price.toFixed( 2 ) } { currencyBgn }/л { car.engine.fuel.fuel_type })</StyledText>
+                                    <StyledText>(актуална цена { car.engine.fuel.price.toFixed( 2 ) } { currencyBgn }/л { fuelTypesEnToBg[car.engine.fuel.fuel_type] })</StyledText>
                                 </TableCell>
                                 <TableCell>
                                     <StyledText sx={ { color: 'green' } }> { valueToFixed( fuelPerYear( 100 ) ) }</StyledText>
@@ -158,7 +164,7 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
             </DialogContent>
             <DialogActions sx={ { placeContent: "center" } }>
                 <div>
-                    <StyledButton onClick={ onClose }>Close</StyledButton>
+                    <StyledButton onClick={ onClose }>Затвори</StyledButton>
                 </div>
             </DialogActions>
         </Dialog>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { CircularProgress, MenuItem, TextField } from "@mui/material";
+import { Checkbox, CircularProgress, FormControlLabel, InputAdornment, MenuItem, TextField } from "@mui/material";
 import { useMutation, UseMutationResult, useQuery, useQueryClient, UseQueryResult } from "@tanstack/react-query";
 import StyledButton from "../components/controls/StyledButton";
 import StyledFormDesktop from "../components/controls/StyledFormDesktop";
@@ -12,52 +12,59 @@ import CarPriceResponse from "./responses/CarPriceResponse";
 import { Car } from "../types/car";
 import StyledText from "../components/controls/StyledText";
 import CarPriceNotFoundResponse from "./responses/CarPriceNotFoundResponse";
-import { useCarBrands } from "../context/CarBrandsContext";
 
 const CarDetailsForm: React.FC = () =>
 {
-    const carBrands = useCarBrands();
     const queryClient = useQueryClient();
-    const [ selectedCarBrand, setSelectedCarBrand ] = useState<string | null>( null );
+
+    const [ selectedCarBrand, setSelectedCarBrand ] = useState( '' );
     const [ selectedModel, setSelectedModel ] = useState( '' );
     const [ selectedCity, setSelectedCity ] = useState( '' );
     const [ selectedFuelType, setSelectedFuelType ] = useState( 'diesel' );
-    const [ selectedYear, setSelectedYear ] = useState( '2015' );
+    const [ selectedYear, setSelectedYear ] = useState( '' );
     const [ openDialog, setOpenDialog ] = useState( false );
     const [ carData, setCarData ] = useState<Car | null>( null );
+    const [ isKw, setIsKw ] = useState( false );
 
-
-    const fuel_types: string[] = [
-        "eev",
-        "gasoline",
-        "diesel",
-        "lpg",
-        "methane",
-    ];
-
-    const getYears: () => number[] = (): number[] =>
+    const handleToggle = () =>
     {
-        const result: number[] = [];
-        for ( let i: number = 2024; i >= 1970; i-- )
-        {
-            result.push( i );
-        }
-        return result;
+        setIsKw( ( prev ) => !prev );
+        setValue( isKw ? "power_hp" : "power_kw", "" );
+    };
+
+
+    const fuelTypesBgToEn: { [ key: string ]: string; } = {
+        "eev": "eev",
+        "бензин": "gasoline",
+        "дизел": "diesel",
+        "газ": "lpg",
+        "метан": "methane",
     };
 
     const {
         register,
         handleSubmit,
+        setValue,
         formState: { errors },
     } = useForm<CarDetailFormInput>( {
         resolver: yupResolver( CarDetailsSchema ),
     } );
 
+    const brandsQuery: UseQueryResult<string[], Error> = useQuery( {
+        queryKey: [ "getCarBrands" ],
+        queryFn: carApi.getCarBrands
+    } );
 
     const carModelsQuery: UseQueryResult<string[], Error> = useQuery( {
         queryKey: [ "getCarModels", selectedCarBrand ],
         queryFn: (): Promise<string[]> => carApi.getModels( selectedCarBrand! ),
-        // enabled: selectedCarBrand == null,
+        enabled: selectedCarBrand !== "",
+    } );
+
+    const modelYearsQuery: UseQueryResult<string[], Error> = useQuery( {
+        queryKey: [ "getModelYears", selectedCarBrand, selectedModel ],
+        queryFn: (): Promise<string[]> => carApi.getModelYears( selectedCarBrand!, selectedModel! ),
+        enabled: selectedModel !== "",
     } );
 
     const citiesQuery: UseQueryResult<string[], Error> = useQuery( {
@@ -71,7 +78,7 @@ const CarDetailsForm: React.FC = () =>
         {
             setCarData( data );
             setOpenDialog( true );
-            queryClient.invalidateQueries( { queryKey: [ 'getCarModels', 'getCities' ] } );
+            queryClient.invalidateQueries( { queryKey: [ 'getCarBrands', 'getCarModels', 'getCities' ] } );
         },
         onError: (): void =>
         {
@@ -90,22 +97,27 @@ const CarDetailsForm: React.FC = () =>
         setSelectedModel( '' );
     }, [ selectedCarBrand ] );
 
+    useEffect( (): void =>
+    {
+        setSelectedYear( '' );
+    }, [ selectedModel ] );
+
     return (
         <>
-            { !mutation.isPending && !carModelsQuery.isPending && (
+            { !mutation.isPending && (
                 <StyledFormDesktop onSubmit={ handleSubmit( onSubmitHandler ) }>
-                    <StyledText variant="h4">Enter the car data</StyledText>
+                    <StyledText variant="h4">Въведете данни за автомобила</StyledText>
 
                     <TextField
                         { ...register( "brand" ) }
                         select
-                        label="Select car brand"
+                        label="Марка"
                         error={ !!errors.brand }
-                        helperText={ errors.brand?.message }
+                        helperText={ "Изберете марка автомобил" }
                         value={ selectedCarBrand }
                         onChange={ ( event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> ): void => setSelectedCarBrand( event.target.value ) }
                     >
-                        { carBrands?.map( ( brand: string ) => (
+                        { brandsQuery.data?.map( ( brand: string ) => (
                             <MenuItem key={ brand } value={ brand }>
                                 { brand }
                             </MenuItem>
@@ -115,9 +127,9 @@ const CarDetailsForm: React.FC = () =>
                     <TextField
                         { ...register( 'model' ) }
                         select
-                        label="Select model"
+                        label="Модел"
                         error={ !!errors.model }
-                        helperText={ errors.model?.message }
+                        helperText={ "Изберете модел" }
                         value={ selectedModel }
                         onChange={ ( event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> ): void => setSelectedModel( event.target.value ) }
                     >
@@ -131,13 +143,13 @@ const CarDetailsForm: React.FC = () =>
                     <TextField
                         { ...register( 'year' ) }
                         select
-                        label="Year"
+                        label="Година"
                         error={ !!errors.year }
                         value={ selectedYear }
-                        helperText={ "Select the year of the car" }
+                        helperText={ "Изберете година на производство" }
                         onChange={ ( event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> ): void => setSelectedYear( event.target.value ) }
                     >
-                        { getYears().map( ( year: number ) => (
+                        { modelYearsQuery.data?.map( ( year: string ) => (
                             <MenuItem key={ year } value={ year }>
                                 { year }
                             </MenuItem>
@@ -146,36 +158,63 @@ const CarDetailsForm: React.FC = () =>
 
                     <TextField
                         { ...register( 'fuel_type' ) }
-                        label="Fuel type"
+                        label="Вид гориво"
                         select
                         error={ !!errors.fuel_type }
-                        helperText={ "Select fuel type of the car" }
+                        helperText={ "Изберете гориво" }
                         value={ selectedFuelType }
                         onChange={ ( event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> ): void => setSelectedFuelType( event.target.value ) }
                     >
-                        { fuel_types.map( ( fuelType: string ) => (
-                            <MenuItem key={ fuelType } value={ fuelType }>
-                                { fuelType }
+                        { Object.entries( fuelTypesBgToEn ).map( ( key: [ string, string ], value ) => (
+                            <MenuItem key={ value } value={ key[ 1 ] }>
+                                { key[ 0 ] }
                             </MenuItem>
                         ) ) }
                     </TextField>
 
                     <TextField
                         { ...register( 'engine_capacity' ) }
-                        label="Engine capacity"
+                        label="Обем на двигателя"
                         type="text"
                         error={ !!errors.engine_capacity }
-                        helperText={ "Capacity of the engine" }
+                        helperText={ "Обем на двигателя" }
+                    />
+
+                    <TextField
+                        { ...register( isKw ? "power_kw" : "power_hp" ) }
+                        label={ `Мощност в ${ isKw ? "кВ" : "к.с." }` }
+                        type="text"
+                        placeholder={ `Мощност в ${ isKw ? "кВ" : "к.с." }` }
+                        error={ isKw ? !!errors.power_kw : !!errors.power_hp }
+                        helperText={ isKw ? "Мощност в кВ" : "Мощност в к.с." }
+                        slotProps={ {
+                            input: {
+                                endAdornment: (
+                                    <InputAdornment position="end">
+                                        <FormControlLabel
+                                            control={
+                                                <Checkbox
+                                                    checked={ isKw }
+                                                    onChange={ handleToggle }
+                                                />
+                                            }
+                                            label="кВ"
+                                        />
+                                    </InputAdornment>
+                                ),
+                            }
+                        } }
                     />
 
                     <TextField
                         { ...register( 'city' ) }
-                        label="City"
+                        label="Град"
                         select
                         error={ !!errors.city }
-                        helperText={ "City of registration" }
+                        helperText={ "Град на регистрация" }
                         value={ selectedCity }
                         onChange={ ( event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> ): void => setSelectedCity( event.target.value ) }
+                        sx={ { textAlign: "center" } }
                     >
                         { citiesQuery.data?.map( ( city: string ) => (
                             <MenuItem key={ city } value={ city }>
@@ -185,34 +224,17 @@ const CarDetailsForm: React.FC = () =>
                     </TextField>
 
                     <TextField
-                        { ...register( 'power_hp' ) }
-                        label="Engine power in HP"
-                        type="text"
-                        error={ !!errors.power_hp }
-                        helperText={ "Engine power in HP" }
-                    />
-
-                    <TextField
-                        { ...register( 'power_kw' ) }
-                        label="Engine power in KW"
-                        type="text"
-                        placeholder="Engine power in KW"
-                        error={ !!errors.power_kw }
-                        helperText={ "Engine power in KW" }
-                    />
-
-                    <TextField
                         { ...register( 'price' ) }
-                        label="Optional: price of the car"
+                        label="По избор: цена на автомобила"
                         type="text"
-                        placeholder="Car price"
+                        placeholder="Цена на автомобила"
                         error={ !!errors.price }
-                        helperText={ "Car price" }
+                        helperText={ "Цена на автомобила" }
                     />
 
                     <br />
                     <StyledButton type="submit" disabled={ mutation.isPending }>
-                        { mutation.isPending ? <CircularProgress size={ "15rem" } /> : "Submit" }
+                        { mutation.isPending ? <CircularProgress size={ "15rem" } /> : "Търси" }
                     </StyledButton>
                 </StyledFormDesktop>
 
@@ -224,10 +246,10 @@ const CarDetailsForm: React.FC = () =>
                     onClose={ () => setOpenDialog( false ) }
                 />
             }
-            { ( carModelsQuery.isPending || mutation.isPending ) &&
+            { ( mutation.isPending ) &&
                 <>
                     <CircularProgress size={ "15rem" } variant="indeterminate" />
-                    <StyledText>Collecting car prices, please wait...</StyledText>
+                    <StyledText>Заявката се обработва, моля изчакайте...</StyledText>
                 </>
             }
             { !carData && mutation.isError &&

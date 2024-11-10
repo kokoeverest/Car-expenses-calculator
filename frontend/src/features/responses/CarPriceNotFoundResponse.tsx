@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Dialog, { DialogProps } from '@mui/material/Dialog';
-import { DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
+import { DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import StyledButton from '../../components/controls/StyledButton';
 import StyledText from '../../components/controls/StyledText';
 
@@ -32,14 +32,10 @@ const CarPriceNotFoundResponse: React.FC<CarPriceNotFoundResponseProps> = ( {
             open={ open }
             onClose={ onClose }
             scroll={ scroll }
-            aria-labelledby="car-price-dialog-errorResponse--title"
+            aria-labelledby="car-price-dialog-errorResponse"
             aria-describedby="car-price-dialog-errorResponse-description"
-            fullWidth={ true }
             maxWidth={ "md" }
         >
-            <DialogTitle id="car-price-dialog-errorResponse-title"
-            >
-            </DialogTitle>
             <DialogContent dividers={ scroll === 'paper' }>
                 <DialogContentText
                     id="car-price-dialog-errorResponse-description"
@@ -58,7 +54,7 @@ const CarPriceNotFoundResponse: React.FC<CarPriceNotFoundResponseProps> = ( {
             </DialogContent>
             <DialogActions sx={ { placeContent: "center" } }>
                 <div>
-                    <StyledButton onClick={ onClose }>Close</StyledButton>
+                    <StyledButton onClick={ onClose }>Затвори</StyledButton>
                 </div>
             </DialogActions>
         </Dialog>
