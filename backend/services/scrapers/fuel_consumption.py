@@ -54,8 +54,8 @@ def scrape_fuel_consumption(car: Car, avg_consumption="0"):
             avg_consumption = driver.find_element(By.CLASS_NAME, "consumption").text
         except Exception as e:
             print(e)
-
-    return string_to_float_converter(avg_consumption)
+        finally:
+            return string_to_float_converter(avg_consumption)
 
 
 def get_fuel_consumption(car: Car):

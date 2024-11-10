@@ -62,8 +62,8 @@ def build_car(
             car_power_kw,
             new_fuel,
             get_euro_category_from_car_year(car_year),
-            0.0,
-            None,
+            0,
+            0,
             None,
         )
         car.engine = Engine(**collection_to_dict(engine_data, Engine))  # type: ignore
@@ -169,6 +169,11 @@ async def get_models_by_car_brand(brand: str):
     data = [next(iter(x), "") for x in read_query(query)]
     return data
 
+
+async def get_years_by_car_model(brand: str, model: str):
+    query = f"SELECT year FROM `car expenses`.cars WHERE brand = '{brand}' AND model = '{model}';"
+    data = [next(iter(x), "") for x in read_query(query)]
+    return data
 
 async def get_cities():
     query = "SELECT name FROM `car expenses`.cities ORDER BY name ASC;"

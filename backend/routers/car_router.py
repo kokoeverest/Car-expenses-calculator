@@ -8,10 +8,12 @@ import sys
 
 sys.path.append(".")
 
-car_router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/car")
+api_router = APIRouter(prefix="/api")
+enums_router = APIRouter(prefix="/api/enums")
 
 
-@car_router.post("/car", tags=["Car price API"], responses=car_responses)
+@api_router.post("/car", tags=["Car price API"], responses=car_responses)
 def get_car_prices(
     brand: Annotated[str, Body()] = "Volvo",
     model: Annotated[str, Body()] = "XC60",
@@ -54,7 +56,7 @@ def get_car_prices(
     return car
 
 
-@car_router.post("/", tags=["Car price client form"], responses=car_responses)
+@router.post("",tags=["Car price client form"], responses=car_responses)
 def get_car_prices_from_form(
     brand: Annotated[str, Form()],
     model: Annotated[str, Form()],
@@ -80,21 +82,28 @@ def get_car_prices_from_form(
     )
 
 
-@car_router.get("/brands")
-async def get_all_car_brands():
-    brands = await cs.get_car_brands()
+@enums_router.get("/{brand}/{model}/years")
+async def get_years_by_brand_and_model(brand: str, model: str):
+    years = await cs.get_years_by_car_model(brand, model)
 
-    return brands
+    return years
 
 
-@car_router.get("/{brand}/models")
+@enums_router.get("/{brand}/models")
 async def get_models_by_brand(brand: str):
     models = await cs.get_models_by_car_brand(brand)
 
     return models
 
 
-@car_router.get("/cities")
+@enums_router.get("/brands")
+async def get_all_car_brands():
+    brands = await cs.get_car_brands()
+
+    return brands
+
+
+@enums_router.get("/cities")
 async def get_city_names():
     cities = await cs.get_cities()
 

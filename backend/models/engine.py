@@ -11,7 +11,7 @@ class Engine(BaseModel):
     fuel: Fuel
     emissions_category: str
     consumption: float = 0
-    oil_capacity: str | None = None
+    oil_capacity: float = 0
     oil_type: str | None = None
 
     @classmethod
