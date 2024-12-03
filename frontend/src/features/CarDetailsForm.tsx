@@ -19,7 +19,7 @@ const CarDetailsForm: React.FC = () =>
 
     const [ selectedCarBrand, setSelectedCarBrand ] = useState( '' );
     const [ selectedModel, setSelectedModel ] = useState( '' );
-    const [ selectedCity, setSelectedCity ] = useState( '' );
+    const [ selectedCity, setSelectedCity ] = useState( 'София' );
     const [ selectedFuelType, setSelectedFuelType ] = useState( 'diesel' );
     const [ selectedYear, setSelectedYear ] = useState( '' );
     const [ openDialog, setOpenDialog ] = useState( false );

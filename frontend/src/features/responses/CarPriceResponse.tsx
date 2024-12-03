@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import Dialog, { DialogProps } from '@mui/material/Dialog';
-import { DialogTitle, DialogContent, DialogContentText, DialogActions, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { DialogTitle, DialogContent, DialogContentText, DialogActions, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Collapse, Box } from '@mui/material';
 import StyledButton from '../../components/controls/StyledButton';
 import StyledText from '../../components/controls/StyledText';
 import { Car } from '../../types/car';
 import { Tire } from '../../types/tire';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 interface CarPriceResponseProps
 {
@@ -18,6 +20,8 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
 {
     const [ scroll ] = useState<DialogProps[ 'scroll' ]>( 'paper' );
     const descriptionElementRef = useRef<HTMLElement>( null );
+
+    const [ isCollapsed, setIsCollapsed ] = React.useState( false );
     const currencyBgn: string = " лв.";
     const fuelTypesEnToBg: { [ key: string ]: string; } = {
         "eev": "eev",
@@ -73,8 +77,9 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
                     id="car-price-dialog-description"
                     ref={ descriptionElementRef }
                     tabIndex={ -1 }
-                >
+                    >
                     <TableContainer component={ Paper } >
+                    <Fragment>
                         <Table size="small" aria-label="a dense table" sx={ { alignItems: "center", border: 1 } }>
                             <TableHead>
                                 <TableRow>
@@ -125,7 +130,7 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
                                     </TableCell>
                                 </TableRow>
                                 <TableCell colSpan={ 1 }>
-                                    <StyledText>(актуална цена { car.engine.fuel.price.toFixed( 2 ) } { currencyBgn }/л { fuelTypesEnToBg[car.engine.fuel.fuel_type] })</StyledText>
+                                    <StyledText>(актуална цена { car.engine.fuel.price.toFixed( 2 ) } { currencyBgn }/л { fuelTypesEnToBg[ car.engine.fuel.fuel_type ] })</StyledText>
                                 </TableCell>
                                 <TableCell>
                                     <StyledText sx={ { color: 'green' } }> { valueToFixed( fuelPerYear( 100 ) ) }</StyledText>
@@ -133,32 +138,50 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
                                 <TableCell>
                                     <StyledText sx={ { color: 'red' } }>{ valueToFixed( fuelPerYear( 200 ) ) }</StyledText>
                                 </TableCell>
-
-                                <TableRow>
-                                    <TableCell><StyledText variant="h6">Размер гуми:</StyledText></TableCell>
+                            </TableHead>
+                                <TableRow sx={ { '& > *': { borderBottom: 'unset' } } }>
+                                    <TableCell>
+                                        <StyledText variant="h6" sx={ { color: 'black', display: "inline" } }>Размер гуми:</StyledText></TableCell>
+                                        <IconButton
+                                            aria-label="expand row"
+                                            size="medium"
+                                            onClick={ () => setIsCollapsed( !isCollapsed ) }
+                                        >
+                                            { isCollapsed ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon /> }
+                                        </IconButton>
                                     <TableCell><StyledText variant="h6">Най-ниска цена</StyledText></TableCell>
                                     <TableCell><StyledText variant="h6">Най-висока цена</StyledText></TableCell>
                                 </TableRow>
-                            </TableHead>
-                            <TableBody>
+
                                 { car.tires.map( ( tire: Tire ) => (
                                     <TableRow
                                         key={ tire.size }
-
                                     >
-                                        <TableCell component="th" scope="row">
-                                            <StyledText variant="h6">{ tire.width }/{ tire.height }/{ tire.prefix }/{ tire.size }</StyledText>
-                                        </TableCell>
-                                        <TableCell>
-                                            <StyledText variant='h6' sx={ { color: 'green' } }>{ valueToFixed( tire.min_price ) }</StyledText>
-                                        </TableCell>
-                                        <TableCell>
-                                            <StyledText variant='h6' sx={ { color: 'red' } }>{ valueToFixed( tire.max_price ) }</StyledText>
+                                        <TableCell style={ { paddingBottom: 0, paddingTop: 0 } } colSpan={ 3 }>
+                                            <Collapse in={ isCollapsed } timeout="auto" unmountOnExit>
+                                                <Box>
+                                                    <Table>
+                                                        <TableHead>
+                                                            <TableRow>
+                                                                <TableCell component="th" scope="row" align="left">
+                                                                    <StyledText variant="h6">{ tire.width }/{ tire.height }/{ tire.prefix }/{ tire.size }</StyledText>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <StyledText variant='h6' sx={ { color: 'green' } }>{ valueToFixed( tire.min_price ) }</StyledText>
+                                                                </TableCell>
+                                                                <TableCell>
+                                                                    <StyledText variant='h6' sx={ { color: 'red' } }>{ valueToFixed( tire.max_price ) }</StyledText>
+                                                                </TableCell>
+                                                            </TableRow>
+                                                        </TableHead>
+                                                    </Table>
+                                                </Box>
+                                            </Collapse>
                                         </TableCell>
                                     </TableRow>
                                 ) ) }
-                            </TableBody>
                         </Table>
+                            </Fragment>
                     </TableContainer>
                 </DialogContentText>
             </DialogContent>
@@ -167,7 +190,7 @@ const CarPriceResponse: React.FC<CarPriceResponseProps> = ( {
                     <StyledButton onClick={ onClose }>Затвори</StyledButton>
                 </div>
             </DialogActions>
-        </Dialog>
+        </Dialog >
 
     );
 };
