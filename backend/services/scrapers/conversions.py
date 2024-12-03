@@ -65,7 +65,7 @@ def word_versions(word: str):
     }
 
 
-def age_converter(age: str | int) -> str:
+def tax_age_converter(age: str | int) -> str:
     if isinstance(age, str) and len(age) == 4:
         age = calculate_age(age)
     else:
@@ -89,7 +89,7 @@ def calculate_age(year: str) -> int:
     return current_year - int(year)
 
 
-def get_euro_category_from_car_year(year: str):
+def tax_get_euro_category_from_car_year(year: str):
     if year == "EEV":
         return year
     if int(year) < 1992:
@@ -151,7 +151,7 @@ def string_to_float_converter(price: str):
         return float(0)
 
 
-def engine_size_converter(size: str) -> str:
+def insurance_engine_size_converter(size: str) -> str:
     if int(size) <= 800:
         return "800"
     elif 800 < int(size) <= 2600:

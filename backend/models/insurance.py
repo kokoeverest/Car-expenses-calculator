@@ -1,5 +1,5 @@
 from datetime import datetime
-from enum import Enum
+from enum import Enum  # YAGNI
 from pydantic import BaseModel
 
 INSURANCE_FUEL_VALUES = {
@@ -23,41 +23,10 @@ class Insurance(BaseModel):
     municipality: str
     registration: bool = False
     driver_age: str | None = None
-    driving_experience: str = "5"
+    driver_experience: str = "5"
     min_price: float = 0
     max_price: float = 0
     date: datetime | None = None
-
-    @classmethod
-    def from_query(
-        cls,
-        id,
-        year,
-        engine_size,
-        fuel_type,
-        power,
-        municipality,
-        registration,
-        driver_age,
-        driving_experience,
-        min_price,
-        max_price,
-        date,
-    ):
-        return cls(
-            id=id,
-            year=year,
-            engine_size=engine_size,
-            fuel_type=fuel_type,
-            power=power,
-            municipality=municipality,
-            registration=registration,
-            driver_age=driver_age,
-            driving_experience=driving_experience,
-            min_price=min_price,
-            max_price=max_price,
-            date=date,
-        )
 
     @classmethod
     def from_list(
@@ -69,7 +38,7 @@ class Insurance(BaseModel):
         municipality,
         registration,
         driver_age,
-        driving_experience,
+        driver_experience,
     ):
         return cls(
             year=year,
@@ -79,25 +48,5 @@ class Insurance(BaseModel):
             municipality=municipality,
             registration=registration,
             driver_age=driver_age,
-            driving_experience=driving_experience,
+            driver_experience=driver_experience,
         )
-
-    def to_dict(self):
-        return {
-            "year": self.year,
-            "engine_size": self.engine_size,
-            "fuel_type": self.fuel_type,
-            "power": self.power,
-            "municipality": self.municipality,
-            "registration": self.registration,
-            "driver age": self.driver_age,
-            "driving experience": self.driving_experience,
-        }
-
-
-class FuelsDictionary(Enum):
-    gasoline = "Бензин"
-    diesel = "Дизел"
-    lpg = "Пропан Бутан"
-    cng = "Метан"
-    premium = "Премиум"

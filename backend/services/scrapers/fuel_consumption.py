@@ -15,7 +15,9 @@ import sys
 
 sys.path.append(".")
 
+
 def scrape_fuel_consumption(car: Car, avg_consumption="0"):
+    print("Scraping fuel consumption...")
     with start_driver(FUEL_CONSUMPTION_WEBSITE) as driver:
         brand = find_correct_name(
             car.brand,
@@ -43,10 +45,10 @@ def scrape_fuel_consumption(car: Car, avg_consumption="0"):
             driver.find_element(By.ID, "constyear_s").send_keys(car.year)
             driver.find_element(By.ID, "constyear_e").send_keys(car.year)
             driver.find_element(By.ID, "power_s").send_keys(
-                int(car.engine.power_hp) - 10 # type: ignore
+                int(car.engine.power_hp) - 10  # type: ignore
             )
             driver.find_element(By.ID, "power_e").send_keys(
-                int(car.engine.power_hp) + 10 # type: ignore
+                int(car.engine.power_hp) + 10  # type: ignore
             )
             driver.find_element(By.XPATH, "//*[@id='add']").submit()
             wait_for_a_second()

@@ -7,8 +7,9 @@ from datetime import date
 import sys
 
 sys.path.append(".")
+from models.car import Car
 from services.scrapers.conversions import (
-    age_converter,
+    tax_age_converter,
     calculate_euro_category,
 )
 
@@ -16,28 +17,50 @@ from services.scrapers.conversions import (
 def generate_car_data_dict(
     city: str, municipality: str, age: str, euro: str, power: str
 ):
-    lst = [city, municipality, age_converter(age), calculate_euro_category(euro), power]
-    data = ["obl", "obs", "old", "euro", "kw"]
+    return {
+        "obl": city,
+        "obs": municipality,
+        "old": tax_age_converter(age),
+        "euro": calculate_euro_category(euro),
+        "kw": power,
+    }
 
-    return dict(el for el in zip(data, lst))
 
+def get_tax_price(car: Car):
+    if car.tax:
+        car_tax_data = [
+            car.tax.city,
+            car.tax.municipality,
+            car.tax.car_age,
+            car.tax.euro_category,
+            car.tax.car_power_kw,
+        ]
 
-def get_tax_price(car_data: list):
-    car_data[1] = next(
-        iter(read_query(f"CALL `Car Expenses`.`get_municipality`('{car_data[0]}');"))
-    )[0]
-    tax_price = next(
-        iter(
-            read_query(
-                "CALL `Car Expenses`.`get_tax_price`(?, ?, ?, ?, ?);", tuple(car_data)
+        car_tax_data[1] = next(
+            iter(
+                read_query(f"CALL `Car Expenses`.`get_municipality`('{car.tax.city}');")
             )
-        ),
-        None,
-    )
-    if tax_price:
-        return float(tax_price[0])
+        )[0]
 
-    car_data_dict = generate_car_data_dict(*car_data)
+        tax_price = next(
+            iter(
+                read_query(
+                    "CALL `Car Expenses`.`get_tax_price`(?, ?, ?, ?, ?);",
+                    tuple(car_tax_data),
+                )
+            ),
+            None,
+        )
+        if tax_price:
+            return float(tax_price[0])
+        else:
+            return scrape_tax_price(car_tax_data)
+    return 0
+
+
+def scrape_tax_price(car_tax_data: list):
+    print("Scraping tax price...")
+    car_data_dict = generate_car_data_dict(*car_tax_data)
     with start_driver(TAXES_WEBSITE) as driver:
         for k, v in car_data_dict.items():
             try:
@@ -58,10 +81,10 @@ def get_tax_price(car_data: list):
         except IndexError:
             price = "0"
 
-    car_data.extend([float(price), date.today()])
+    car_tax_data.extend([float(price), date.today()])
 
     _ = insert_query(
-        "CALL `Car Expenses`.`add_tax_price`(?,?,?,?,?,?,?);", tuple(car_data)
+        "CALL `Car Expenses`.`add_tax_price`(?,?,?,?,?,?,?);", tuple(car_tax_data)
     )
 
     return float(price)

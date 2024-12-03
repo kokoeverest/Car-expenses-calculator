@@ -9,7 +9,7 @@ from services.scrapers.insurance import try_click
 from services.scrapers.conversions import (
     wait_for_a_second,
     string_to_float_converter,
-    engine_size_converter,
+    insurance_engine_size_converter,
     insurance_power_converter,
 )
 
@@ -59,7 +59,7 @@ class InsurancePageTest(unittest.TestCase):
     def test_pageSelectorsFilledCorrectly_returnsListOfPrices(self):
         """Submission form is divided into two pages and this test performs the actions on the first page"""
         # Arrange
-        engine_size = engine_size_converter(test_insurance_data["engine_size"])
+        engine_size = insurance_engine_size_converter(test_insurance_data["engine_size"])
         power = insurance_power_converter(test_insurance_data["power"])
         # Act
         Select(self.driver.find_element(By.ID, "typeSelect")).select_by_value("1")

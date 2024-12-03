@@ -11,6 +11,7 @@ sys.path.append(".")
 
 def get_vignette_price(url=VIGNETTE_WEBSITE):
     """start_driver needed if the request.get(url) fails for some reason (cookies window for example)?"""
+    print("Scraping vignette price...")
     try:
         response = requests.get(url)
         soup = bs(response.text, features="lxml")

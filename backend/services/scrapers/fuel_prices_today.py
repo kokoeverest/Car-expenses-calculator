@@ -21,11 +21,12 @@ FUELO_URL = f"http://fuelo.net/api/price?key={FUELO_API_KEY}&fuel="
 
 
 def scrape_fuel_prices(url=FUELO_URL):
+    print("Scraping fuel prices for the first time today...")
     prices = {}
-    query = []
+    query: list[str] = []
 
     for fuel in FUELS_DICT.values():
-        temp_result: dict[str, str | int] = requests.get(f"{url}{fuel}").json()
+        temp_result: dict[str, str | float] = requests.get(f"{url}{fuel}").json()
 
         if temp_result.get("status") == "OK":
             prices[fuel] = temp_result.get("price")
@@ -51,5 +52,5 @@ def get_fuel_price(f_type) -> float:
         return prices[f_type]
     else:
         last_known_prices = "CALL `Car Expenses`.`get_last_known_fuel_prices`();"
-        prices = {el[0]: el[1] for el in read_query(last_known_prices)}
+        prices: dict[str, float] = {el[0]: el[1] for el in read_query(last_known_prices)}
         return prices[f_type]

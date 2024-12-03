@@ -5,7 +5,7 @@ from datetime import date
 import re
 import sys
 from models.car import Car
-from common.helpers import start_driver
+from common.helpers import start_driver, collection_to_dict
 from common.WEBSITES import TIRES_WEBSITE
 
 sys.path.append(".")
@@ -20,6 +20,7 @@ from data.db_connect import (
 """This scraper should accept the car object and add the tires sizes and prices to the calculations"""
 
 FIND_TIRE_SIZE_PATTERN = r"\d{3}/\d{2}R\d{2}|\d{3}/\d{2}ZR\d{2}"
+FIND_TIRE_PRICES_PATTERN = r"^\d+,\d+|^\d+\.\d+|^\d+"
 
 
 def find_tire_sizes(driver: webdriver.Chrome):
@@ -70,7 +71,7 @@ def add_product_price(driver: webdriver.Chrome) -> float:
     try:
         product = driver.find_element(By.CLASS_NAME, "price").text
 
-        matches = re.findall(r"^\d+,\d+|^\d+\.\d+|^\d+", product)
+        matches = re.findall(FIND_TIRE_PRICES_PATTERN, product)
         if len(matches) > 0:
             product: str = matches[0]
 
@@ -150,7 +151,7 @@ def scrape_possible_tires(brand, model, year):
 def return_list_with_tire_objects(possible_sizes_list: list):
     """Retrieve info from the database for each tire in the list and convert it in a Tire object"""
 
-    read_query_result = "SELECT `Prefix`, `Width`, `Height`, `Radius`, `Min price`, `Max price` FROM Tires WHERE "
+    read_query_result = "SELECT `Width`, `Height`, `Prefix`, `Radius`, `Min price`, `Max price` FROM Tires WHERE "
 
     for tire_size in possible_sizes_list:
         w, h, i = tire_size[:3], tire_size[4:6], tire_size[-2:]
@@ -159,6 +160,4 @@ def return_list_with_tire_objects(possible_sizes_list: list):
         )
     result = read_query(read_query_result.removesuffix(" OR"))
 
-    return_list = [Tire.from_query(*el) for el in result]
-
-    return return_list
+    return  [Tire(**collection_to_dict(el, Tire)) for el in result] # type: ignore

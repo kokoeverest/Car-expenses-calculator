@@ -2,9 +2,8 @@ from models.car import Car
 from models.fuel import Fuel
 from models.tax import Tax
 from models.engine import Engine
-from models.tire import Tire
 from services.scrapers.conversions import (
-    get_euro_category_from_car_year,
+    tax_get_euro_category_from_car_year,
     done,
     kw_to_hp_converter,
     hp_to_kw_converter,
@@ -18,7 +17,6 @@ from services.scrapers.insurance import get_insurance_price
 from services.scrapers.vignette import get_vignette_price
 from common.exceptions import WrongCarData
 from common.helpers import collection_to_dict
-import json
 from datetime import datetime
 from data.db_connect import read_query
 
@@ -34,7 +32,7 @@ def build_car(
     city: str,
     car_price: str | float = 0,
     registration: int = 0,
-    driver_age: str | None = None,
+    driver_age: str | None = "35",
     driver_experience: str = "5",
 ):
     if not engine_capacity == "eev":
@@ -61,7 +59,7 @@ def build_car(
             car_power_hp,
             car_power_kw,
             new_fuel,
-            get_euro_category_from_car_year(car_year),
+            tax_get_euro_category_from_car_year(car_year),
             0,
             0,
             None,
@@ -90,15 +88,7 @@ def build_car(
     )
     car.tax = Tax(**collection_to_dict(tax_data, Tax))  # type: ignore
     if car.tax:
-        car.tax.price = get_tax_price(
-            [
-                car.tax.city,
-                car.tax.municipality,
-                car.tax.car_age,
-                car.tax.euro_category,
-                car.tax.car_power_kw,
-            ]
-        )
+        car.tax.price = get_tax_price(car)
     else:
         raise ValueError("No tax data")
 
@@ -136,7 +126,7 @@ def get_car(
     if not result:
         return
 
-    car = Car.create_car(*result)
+    car = Car.from_query(*result)
 
     engine_data = next(
         iter(
@@ -147,7 +137,7 @@ def get_car(
         None,
     )
     if engine_data:
-        new_fuel = Fuel(**collection_to_dict((f_type, float(0), None), Fuel)) # type: ignore
+        new_fuel = Fuel(**collection_to_dict((f_type, float(0), None), Fuel))  # type: ignore
         engine_data = list(engine_data)
         engine_data[6] = new_fuel
 
@@ -175,78 +165,8 @@ async def get_years_by_car_model(brand: str, model: str):
     data = [next(iter(x), "") for x in read_query(query)]
     return data
 
+
 async def get_cities():
     query = "SELECT name FROM `car expenses`.cities ORDER BY name ASC;"
     data = [next(iter(x), "") for x in read_query(query)]
     return data
-
-
-def calculate_prices(car: Car):
-    if (
-        car.engine
-        and car.engine.fuel
-        and car.engine.fuel.price
-        and car.engine.consumption
-    ):
-        fuel_per_30000_km = (car.engine.fuel.price * car.engine.consumption) * 300
-        fuel_per_10000_km = (car.engine.fuel.price * car.engine.consumption) * 100
-    else:
-        raise ValueError("No engine data")
-
-    tires_max_price, tires_min_price = car.calculate_tires_price()
-
-    total_min_price = sum(
-        (
-            car.tax.price if car.tax else 0,
-            fuel_per_10000_km,
-            tires_min_price,
-            car.insurance.min_price if car.insurance else 0,
-            car.vignette,
-        ),
-        start=0,
-    )
-    total_max_price = sum(
-        (
-            car.tax.price if car.tax else 0,
-            fuel_per_30000_km,
-            tires_max_price,
-            car.insurance.max_price if car.insurance else 0,
-            car.vignette,
-        ),
-        start=0,
-    )
-    car_dict = car.to_dict()
-
-    result_min = {
-        "Обща минимална цена": f"{total_min_price:.2f} лв",
-        "Данък": f"{car.tax.price  if car.tax else 0:.2f} лв",
-        "Гориво за 10000 км годишен пробег": f"{fuel_per_10000_km:.2f} лв ({fuel_per_10000_km/12:.2f} лв/месец)",
-        "Най-ниска цена на застраховка ГО": f"{(car.insurance.min_price if car.insurance else 0):.2f} лв (еднократно плащане)",
-        "Най-евтини гуми (1 брой)": {
-            str(tire): f"{tire.min_price} лв"
-            for tire in car.tires
-            if isinstance(tire, Tire)
-        },
-    }
-
-    result_max = {
-        "Обща максимална цена": f"{total_max_price:.2f} лв",
-        "Данък": f"{car.tax.price if car.tax else 0:.2f} лв",
-        "Гориво за 30000 км годишен пробег": f"{fuel_per_30000_km:.2f} лв ({fuel_per_30000_km/12:.2f} лв/месец)",
-        "Най-висока цена на застраховка ГО": f"{(car.insurance.max_price if car.insurance else 0):.2f} лв (еднократно плащане)",
-        "Годишна винетка": f"{car.vignette:.2f} лв",
-        "Най-скъпи гуми (1 брой)": {
-            str(tire): f"{tire.max_price} лв"
-            for tire in car.tires
-            if isinstance(tire, Tire)
-        },
-    }
-    final_result = json.dumps(
-        (car_dict, result_min, result_max),
-        ensure_ascii=False,
-        separators=("", " - "),
-    )
-    print(json.dumps(car_dict, indent=2, ensure_ascii=False, separators=("", " - ")))
-    print(json.dumps(result_min, indent=2, ensure_ascii=False, separators=("", " - ")))
-    print(json.dumps(result_max, indent=2, ensure_ascii=False, separators=("", " - ")))
-    return final_result

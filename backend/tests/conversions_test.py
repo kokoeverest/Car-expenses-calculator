@@ -52,7 +52,7 @@ class ConversionsTests(unittest.TestCase):
         expected_result = ["0", "1", "2", "3", "4"]
 
         # Act
-        actual_result = [con.age_converter(age) for age in td.sample_car_ages]
+        actual_result = [con.tax_age_converter(age) for age in td.sample_car_ages]
 
         # Assert
         self.assertListEqual(actual_result, expected_result)
@@ -72,7 +72,7 @@ class ConversionsTests(unittest.TestCase):
 
         # Act
         actual_result = [
-            con.get_euro_category_from_car_year(year) for year in td.sample_car_years
+            con.tax_get_euro_category_from_car_year(year) for year in td.sample_car_years
         ]
 
         # Assert
@@ -143,7 +143,7 @@ class ConversionsTests(unittest.TestCase):
 
         # Act
         actual_result = [
-            con.engine_size_converter(size) for size in td.sample_engine_sizes
+            con.insurance_engine_size_converter(size) for size in td.sample_engine_sizes
         ]
 
         # Assert

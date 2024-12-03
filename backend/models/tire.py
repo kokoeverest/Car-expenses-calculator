@@ -1,4 +1,3 @@
-import json
 from pydantic import BaseModel
 
 
@@ -9,17 +8,6 @@ class Tire(BaseModel):
     size: str
     min_price: float = 0
     max_price: float = 0
-
-    @classmethod
-    def from_query(cls, p, w, h, s, min_price, max_price):
-        return cls(
-            width=w,
-            height=h,
-            prefix=p,
-            size=s,
-            min_price=min_price,
-            max_price=max_price,
-        )
 
     def __repr__(self) -> str:
         return f"{self.width}/{self.height}{self.prefix}{self.size}"
@@ -35,14 +23,3 @@ class Tire(BaseModel):
 
     def __hash__(self) -> int:
         return hash(f"{self.width}/{self.height}{self.prefix}{self.size}")
-
-    def get_prices_list(self):
-        return [f"{self.min_price} лв", f"{self.max_price} лв"]
-
-    def jsonify(self):
-        result = {
-            "Размер": self.__repr__(),
-            "Най-ниска цена": self.min_price,
-            "Най-висока цена": self.max_price,
-        }
-        return json.dumps(result, indent=2, ensure_ascii=False, separators=("", " - "))

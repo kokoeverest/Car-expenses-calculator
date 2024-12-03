@@ -13,7 +13,7 @@ def _get_connection() -> Connection:
     )
 
 
-def read_query(sql: str, sql_params=()):
+def read_query(sql: str, sql_params: tuple[str] | tuple = ()):
     with _get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(sql, sql_params)
@@ -21,7 +21,7 @@ def read_query(sql: str, sql_params=()):
         return list(cursor)
 
 
-def insert_query(sql: str, sql_params=()):
+def insert_query(sql: str, sql_params: tuple[str] | tuple = ()):
     with _get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(sql, sql_params)
@@ -29,7 +29,8 @@ def insert_query(sql: str, sql_params=()):
 
         return cursor.lastrowid
 
-def multiple_insert_queries(queries: list):
+
+def multiple_insert_queries(queries: list[str]):
     with _get_connection() as conn:
         cursor = conn.cursor()
         for query in queries:
@@ -38,7 +39,8 @@ def multiple_insert_queries(queries: list):
 
         return cursor.lastrowid
 
-def update_query(sql: str, sql_params=()) -> int:
+
+def update_query(sql: str, sql_params: tuple[str] | tuple = ()) -> int:
     with _get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(sql, sql_params)
